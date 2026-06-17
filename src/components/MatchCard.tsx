@@ -17,10 +17,11 @@ const RESULT_BADGE: Record<string, { label: string; cls: string }> = {
 }
 
 interface Props {
-  match: MatchWithPrediction
+  match:      MatchWithPrediction
+  highlight?: boolean  // true when one of the teams is the user's favorite
 }
 
-export default function MatchCard({ match }: Props) {
+export default function MatchCard({ match, highlight = false }: Props) {
   const navigate = useNavigate()
   const status   = deriveStatus(match)
   const pred     = match.my_prediction
@@ -32,7 +33,11 @@ export default function MatchCard({ match }: Props) {
   return (
     <button
       onClick={() => navigate(`/match/${match.id}`)}
-      className="w-full rounded-xl bg-wc-surface p-4 text-left ring-1 ring-white/10 transition active:scale-[0.98] hover:ring-white/20"
+      className={`w-full rounded-xl p-4 text-left ring-1 transition active:scale-[0.98] ${
+        highlight
+          ? 'bg-wc-gold/[0.07] ring-wc-gold/40 hover:ring-wc-gold/60'
+          : 'bg-wc-surface ring-white/10 hover:ring-white/20'
+      }`}
     >
       {/* Row 1: round + status badge */}
       <div className="mb-3 flex items-center justify-between">
