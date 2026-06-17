@@ -52,7 +52,7 @@ export default function MatchPage() {
   const { user }       = useSupabase()
   const { profile }    = useProfile()
   const { match, prediction, loading, error, savePrediction } = useMatch(id)
-  const { messages, sending, sendMessage, bottomRef }         = useChat(id)
+  const { messages, sending, error: chatError, sendMessage, bottomRef } = useChat(id)
 
   const [homeScore,  setHomeScore]  = useState(0)
   const [awayScore,  setAwayScore]  = useState(0)
@@ -257,6 +257,9 @@ export default function MatchPage() {
 
       {/* ── Chat input — sits above BottomNav ── */}
       <div className="border-t border-white/10 bg-wc-surface px-4 py-2">
+        {chatError && (
+          <p className="mb-1 text-xs text-red-400">{chatError}</p>
+        )}
         <form onSubmit={handleSendChat} className="flex items-center gap-2">
           <input
             type="text"
