@@ -82,6 +82,13 @@ USER_ID = JSON.parse(session.value)?.user?.id ?? '';
 console.log('Session key:', session?.key);
 console.log('User ID from session:', USER_ID);
 
+// Ensure onboarding is marked complete so the Phase 4 modal never blocks tests
+await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${USER_ID}`, {
+  method: 'PATCH',
+  headers: { ...HEADERS, Prefer: 'return=minimal' },
+  body: JSON.stringify({ onboarding_complete: true }),
+});
+
 // ── Helper: open schedule page with optional geo ──────────────────────────────
 // Only intercepts Nominatim — never touches Supabase REST so PATCH calls flow through.
 async function openSchedule(geoCoords) {

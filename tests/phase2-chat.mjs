@@ -71,6 +71,13 @@ USER_ID = JSON.parse(session.value)?.user?.id ?? '';
 console.log('Session key :', session?.key);
 console.log('User ID     :', USER_ID);
 
+// Ensure onboarding is marked complete so the Phase 4 modal never blocks tests
+await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${USER_ID}`, {
+  method: 'PATCH',
+  headers: { ...HEADERS, Prefer: 'return=minimal' },
+  body: JSON.stringify({ onboarding_complete: true }),
+});
+
 // Use first available match (chat is always open regardless of match status)
 const matchRes = await fetch(
   `${SUPABASE_URL}/rest/v1/matches?select=id,team1,team2&order=starts_at.asc&limit=1`,

@@ -90,6 +90,13 @@ USER_ID = JSON.parse(session.value)?.user?.id ?? '';
 console.log('Session key :', session?.key);
 console.log('User ID     :', USER_ID);
 
+// Ensure onboarding is marked complete so the Phase 4 modal never blocks tests
+await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${USER_ID}`, {
+  method: 'PATCH',
+  headers: { ...HEADERS, Prefer: 'return=minimal' },
+  body: JSON.stringify({ onboarding_complete: true }),
+});
+
 // ── Find a safely-upcoming match (≥2h away, guaranteed unlocked) ─────────────
 const twoHoursAhead = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
 const matchRes = await fetch(
