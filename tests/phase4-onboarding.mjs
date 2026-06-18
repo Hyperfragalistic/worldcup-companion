@@ -182,9 +182,18 @@ try {
   await teamSelect.selectOption('USA')
 
   const letsGoBtn = page.getByRole('button', { name: /Let's go!/i })
-  await letsGoBtn.click()
 
-  await page.waitForSelector('text=Schedule', { timeout: 8000 })
+  // Wait for the profiles PATCH to complete before checking the DB.
+  // The optimistic update shows "Schedule" before Supabase confirms the write,
+  // so we listen for the network response instead of the UI change.
+  const patchDone = page.waitForResponse(
+    r => r.url().includes('/rest/v1/profiles') && r.request().method() === 'PATCH',
+    { timeout: 8000 }
+  )
+  await letsGoBtn.click()
+  await patchDone
+
+  await page.waitForSelector('text=Schedule', { timeout: 5000 })
   ok('OnboardingModal: submits successfully, modal closes, schedule visible')
 
   // 18. Verify DB fields
