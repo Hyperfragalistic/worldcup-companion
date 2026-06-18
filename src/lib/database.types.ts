@@ -5,32 +5,35 @@ export interface Database {
     Tables: {
       profiles: {
         Row: {
-          id:            string
-          username:      string | null
-          full_name:     string | null
-          avatar_url:    string | null
-          favorite_team: string | null
-          country:       string | null
-          created_at:    string
-          updated_at:    string
+          id:                  string
+          username:            string | null
+          full_name:           string | null
+          avatar_url:          string | null
+          favorite_team:       string | null
+          country:             string | null
+          onboarding_complete: boolean
+          created_at:          string
+          updated_at:          string
         }
         Insert: {
-          id:            string
-          username?:     string | null
-          full_name?:    string | null
-          avatar_url?:   string | null
-          favorite_team?: string | null
-          country?:      string | null
-          created_at?:   string
-          updated_at?:   string
+          id:                   string
+          username?:            string | null
+          full_name?:           string | null
+          avatar_url?:          string | null
+          favorite_team?:       string | null
+          country?:             string | null
+          onboarding_complete?: boolean
+          created_at?:          string
+          updated_at?:          string
         }
         Update: {
-          username?:     string | null
-          full_name?:    string | null
-          avatar_url?:   string | null
-          favorite_team?: string | null
-          country?:      string | null
-          updated_at?:   string
+          username?:            string | null
+          full_name?:           string | null
+          avatar_url?:          string | null
+          favorite_team?:       string | null
+          country?:             string | null
+          onboarding_complete?: boolean
+          updated_at?:          string
         }
       }
       matches: {

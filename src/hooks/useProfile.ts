@@ -7,7 +7,7 @@ interface UseProfileReturn {
   profile:       Profile | null
   loading:       boolean
   error:         string | null
-  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'full_name' | 'favorite_team' | 'country'>>) => Promise<string | null>
+  updateProfile: (updates: Partial<Pick<Profile, 'username' | 'full_name' | 'favorite_team' | 'country' | 'onboarding_complete'>>) => Promise<string | null>
 }
 
 export function useProfile(): UseProfileReturn {
@@ -32,7 +32,7 @@ export function useProfile(): UseProfileReturn {
   }, [user])
 
   const updateProfile = useCallback(async (
-    updates: Partial<Pick<Profile, 'username' | 'full_name' | 'favorite_team' | 'country'>>,
+    updates: Partial<Pick<Profile, 'username' | 'full_name' | 'favorite_team' | 'country' | 'onboarding_complete'>>,
   ): Promise<string | null> => {
     if (!user) return 'Not authenticated'
 

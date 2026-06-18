@@ -1,9 +1,14 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { SupabaseProvider, useSupabase } from './providers/SupabaseProvider'
-import AuthPage     from './pages/AuthPage'
-import SchedulePage from './pages/SchedulePage'
-import MatchPage    from './pages/MatchPage'
-import ProfilePage  from './pages/ProfilePage'
+import AuthPage        from './pages/AuthPage'
+import SchedulePage    from './pages/SchedulePage'
+import MatchPage       from './pages/MatchPage'
+import ProfilePage     from './pages/ProfilePage'
+import WelcomeModal    from './components/WelcomeModal'
+import OnboardingModal from './components/OnboardingModal'
+import { useProfile }  from './hooks/useProfile'
+import { useGeoLocation } from './hooks/useGeoLocation'
 
 function Spinner() {
   return (
@@ -21,6 +26,54 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location    = useLocation()
   if (!session) return <Navigate to="/auth" state={{ from: location }} replace />
   return <>{children}</>
+}
+
+// Shown once per user after signup:
+//   1. WelcomeModal (auto-dismiss 4 s, once per device via localStorage)
+//   2. OnboardingModal (2-step form, dismissed permanently via onboarding_complete flag)
+function OnboardingGate() {
+  const { user, loading: authLoading } = useSupabase()
+  const { profile, loading: profileLoading, updateProfile } = useProfile()
+  const geo = useGeoLocation()
+
+  const [showWelcome,    setShowWelcome]    = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (authLoading || profileLoading || !user || !profile) return
+    if (profile.onboarding_complete) return
+
+    const welcomeKey = `wc_welcome_${user.id}`
+    if (!localStorage.getItem(welcomeKey)) {
+      setShowWelcome(true)
+    } else {
+      setShowOnboarding(true)
+    }
+  }, [authLoading, profileLoading, user, profile])
+
+  function handleWelcomeContinue() {
+    setShowWelcome(false)
+    if (user) localStorage.setItem(`wc_welcome_${user.id}`, '1')
+    setShowOnboarding(true)
+  }
+
+  if (!showWelcome && !showOnboarding) return null
+
+  return (
+    <>
+      {showWelcome && (
+        <WelcomeModal onContinue={handleWelcomeContinue} />
+      )}
+      {showOnboarding && (
+        <OnboardingModal
+          profile={profile!}
+          geo={geo}
+          updateProfile={updateProfile}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+    </>
+  )
 }
 
 function AppRoutes() {
@@ -59,6 +112,7 @@ export default function App() {
     <SupabaseProvider>
       <BrowserRouter>
         <AppRoutes />
+        <OnboardingGate />
       </BrowserRouter>
     </SupabaseProvider>
   )
