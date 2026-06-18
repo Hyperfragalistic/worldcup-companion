@@ -33,3 +33,6 @@ vite.config.ts.timestamp-*
 
 # Supabase CLI state
 supabase/.temp/
+
+# MCP config contains access tokens — never commit
+.mcp.json
