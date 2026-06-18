@@ -7,6 +7,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useSupabase } from '../providers/SupabaseProvider'
 import { teamFlag, deriveStatus, formatFullKickoff, isLocked, scorePrediction } from '../lib/utils'
 import BottomNav from '../components/BottomNav'
+import OddsDisplay from '../components/OddsDisplay'
 
 // ---------------------------------------------------------------------------
 // Score stepper — +/- buttons for mobile-friendly score input
@@ -170,6 +171,9 @@ export default function MatchPage() {
             </div>
           </div>
         </div>
+
+        {/* Odds display */}
+        <OddsDisplay matchId={id} team1={match.team1} team2={match.team2} />
 
         {/* Prediction section */}
         <div className="mx-4 mb-4 rounded-xl bg-wc-surface p-4 ring-1 ring-white/10">

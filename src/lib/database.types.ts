@@ -38,35 +38,41 @@ export interface Database {
       }
       matches: {
         Row: {
-          id:         string
-          round:      string
-          match_date: string
-          team1:      string
-          team2:      string
-          venue:      string | null
-          group_name: string | null
-          starts_at:  string
-          score1:     number | null
-          score2:     number | null
-          status:     'upcoming' | 'live' | 'finished'
+          id:                 string
+          round:              string
+          match_date:         string
+          team1:              string
+          team2:              string
+          venue:              string | null
+          group_name:         string | null
+          starts_at:          string
+          score1:             number | null
+          score2:             number | null
+          status:             'upcoming' | 'live' | 'finished'
+          odds:               OddsData | null
+          odds_last_updated:  string | null
         }
         Insert: {
-          id?:        string
-          round:      string
-          match_date: string
-          team1:      string
-          team2:      string
-          venue?:     string | null
-          group_name?: string | null
-          starts_at:  string
-          score1?:    number | null
-          score2?:    number | null
-          status?:    'upcoming' | 'live' | 'finished'
+          id?:                string
+          round:              string
+          match_date:         string
+          team1:              string
+          team2:              string
+          venue?:             string | null
+          group_name?:        string | null
+          starts_at:          string
+          score1?:            number | null
+          score2?:            number | null
+          status?:            'upcoming' | 'live' | 'finished'
+          odds?:              OddsData | null
+          odds_last_updated?: string | null
         }
         Update: {
-          score1?:  number | null
-          score2?:  number | null
-          status?:  'upcoming' | 'live' | 'finished'
+          score1?:            number | null
+          score2?:            number | null
+          status?:            'upcoming' | 'live' | 'finished'
+          odds?:              OddsData | null
+          odds_last_updated?: string | null
         }
       }
       predictions: {
@@ -115,6 +121,14 @@ export interface Database {
     Functions: Record<string, never>
     Enums:     Record<string, never>
   }
+}
+
+// Decimal odds for a single match (home / draw / away + optional totals market)
+export interface OddsData {
+  home_win:  number
+  draw:      number
+  away_win:  number
+  over_2_5?: number
 }
 
 // Convenience aliases used throughout the app
