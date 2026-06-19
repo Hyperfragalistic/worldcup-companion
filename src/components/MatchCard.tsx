@@ -145,7 +145,7 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
                 STATUS_BADGE[status]
               } ${isLive ? 'animate-pulse' : ''}`}
             >
-              {isLive ? '● Live' : isFinished ? 'FT' : formatKickoff(match.starts_at)}
+              {isLive ? '● Live' : isFinished ? 'FT' : (localTime ?? formatKickoff(match.starts_at))}
             </span>
             <ChevronDown
               className={`h-4 w-4 flex-shrink-0 text-gray-600 transition-transform duration-200 ${
