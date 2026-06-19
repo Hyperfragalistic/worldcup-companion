@@ -54,6 +54,16 @@ export function formatFullKickoff(isoStr: string): string {
   return `${formatShortDate(isoStr)} · ${formatKickoff(isoStr)}`
 }
 
+/** ISO timestamp → '3:00 PM EDT' in the given IANA timezone */
+export function formatKickoffLocal(isoStr: string, tz: string): string {
+  return new Date(isoStr).toLocaleTimeString('en-US', {
+    hour:         'numeric',
+    minute:       '2-digit',
+    timeZone:     tz,
+    timeZoneName: 'short',
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Match status
 // ---------------------------------------------------------------------------

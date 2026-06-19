@@ -6,6 +6,7 @@ import {
   teamFlag,
   deriveStatus,
   formatKickoff,
+  formatKickoffLocal,
   formatShortDate,
   scorePrediction,
 } from '../lib/utils'
@@ -50,6 +51,10 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
   // Whether the "Predict" CTA should be emphasised
   const wantsPrediction = isUpcoming && !pred
 
+  const localTz    = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const showLocal  = localTz !== 'UTC'
+  const localTime  = showLocal ? formatKickoffLocal(match.starts_at, localTz) : null
+
   function goToMatch()   { navigate(`/match/${match.id}`) }
   function goToChat()    { navigate(`/match/${match.id}`) } // chat is on same page
 
@@ -70,7 +75,7 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
           <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide flex-shrink-0 ${
             STATUS_BADGE[status]
           } ${isLive ? 'animate-pulse' : ''}`}>
-            {isLive ? '● Live' : isFinished ? 'FT' : formatKickoff(match.starts_at)}
+            {isLive ? '● Live' : isFinished ? 'FT' : (localTime ?? formatKickoff(match.starts_at))}
           </span>
         </div>
 
@@ -208,15 +213,23 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
 
             {/* Kickoff + venue */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <Clock className="h-3.5 w-3.5 flex-shrink-0 text-gray-600" />
-                <span>
-                  {isFinished
-                    ? `Played ${formatShortDate(match.starts_at)}`
-                    : isLive
-                    ? `Live · started ${formatShortDate(match.starts_at)} ${formatKickoff(match.starts_at)}`
-                    : `${formatShortDate(match.starts_at)} · ${formatKickoff(match.starts_at)}`}
-                </span>
+              <div className="flex items-start gap-2 text-xs text-gray-400">
+                <Clock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-600" />
+                <div className="flex flex-col gap-0.5">
+                  <span>
+                    {isFinished
+                      ? `Played ${formatShortDate(match.starts_at)}`
+                      : isLive
+                      ? `Live · started ${formatShortDate(match.starts_at)}`
+                      : formatShortDate(match.starts_at)}
+                  </span>
+                  {!isFinished && (
+                    <span className="flex flex-wrap gap-x-2 text-gray-500">
+                      <span>{formatKickoff(match.starts_at)}</span>
+                      {localTime && <span className="text-gray-600">· {localTime} local</span>}
+                    </span>
+                  )}
+                </div>
               </div>
               {match.venue && (
                 <div className="flex items-start gap-2 text-xs text-gray-500">
