@@ -60,7 +60,7 @@ export default function SchedulePage() {
 
   const [searchInput, setSearchInput] = useState(searchRaw)
   const debounceRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const dateStripRef  = useRef<HTMLDivElement>(null)
+  const dateChipRefs  = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sectionRefs   = useRef<Map<string, HTMLElement>>(new Map())
 
   const favoriteTeam = profile?.favorite_team ?? null
@@ -207,17 +207,14 @@ export default function SchedulePage() {
       .slice(0, 3)
   }, [matches, favoriteTeam, showRelevant])
 
-  // Auto-scroll date strip to the today chip on mount / when filter changes
+  // Auto-scroll date strip: find today chip (or nearest future date) and center it
   useEffect(() => {
-    const strip = dateStripRef.current
-    if (!strip || filteredDates.length === 0) return
-    const todayIdx = filteredDates.indexOf(today)
-    const nearestIdx = todayIdx >= 0
-      ? todayIdx
-      : filteredDates.findIndex(d => d > today)  // first future date
-    if (nearestIdx < 0) return
-    const chip = strip.children[nearestIdx + 1] as HTMLElement // +1 for the "All" chip
-    chip?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    if (filteredDates.length === 0) return
+    const target = filteredDates.includes(today)
+      ? today
+      : filteredDates.find(d => d > today)
+    if (!target) return
+    dateChipRefs.current.get(target)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }, [filteredDates, today])
 
   // ── Scroll-to-date helper ──────────────────────────────────────────────────
@@ -342,24 +339,46 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Date strip — single-line pills, uniform "Jun 18" format */}
+        {/* Date strip — one scrollable row per month */}
         {!loading && filteredDates.length > 1 && (
-          <div ref={dateStripRef}
-            className="flex gap-1.5 overflow-x-auto px-4 pb-2.5 scrollbar-none border-t border-white/5 pt-2">
-            {filteredDates.map(date => {
-              const isToday = date === today
-              const hasLive = byDate.get(date)?.some(m => deriveStatus(m) === 'live') ?? false
+          <div className="border-t border-white/5 pt-2 pb-2 space-y-1">
+            {Array.from(
+              filteredDates.reduce((acc, date) => {
+                const month = date.slice(0, 7) // 'YYYY-MM'
+                if (!acc.has(month)) acc.set(month, [])
+                acc.get(month)!.push(date)
+                return acc
+              }, new Map<string, string[]>())
+            ).map(([month, dates]) => {
+              const monthLabel = new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
               return (
-                <button key={date} onClick={() => scrollToDate(date)}
-                  className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                    isToday
-                      ? 'bg-wc-gold/20 text-wc-gold ring-1 ring-wc-gold/40'
-                      : hasLive
-                      ? 'bg-red-500/10 text-red-400 ring-1 ring-red-500/30'
-                      : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
-                  }`}>
-                  {dateStripLabel(date)}
-                </button>
+                <div key={month} className="flex items-center">
+                  <span className="w-9 flex-shrink-0 text-center text-[10px] font-bold uppercase tracking-wider text-gray-600 select-none">
+                    {monthLabel}
+                  </span>
+                  <div className="flex gap-1.5 overflow-x-auto pr-4 scrollbar-none">
+                    {dates.map(date => {
+                      const isToday = date === today
+                      const hasLive = byDate.get(date)?.some(m => deriveStatus(m) === 'live') ?? false
+                      const day = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })
+                      return (
+                        <button
+                          key={date}
+                          ref={el => { if (el) dateChipRefs.current.set(date, el); else dateChipRefs.current.delete(date) }}
+                          onClick={() => scrollToDate(date)}
+                          className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                            isToday
+                              ? 'bg-wc-gold/20 text-wc-gold ring-1 ring-wc-gold/40'
+                              : hasLive
+                              ? 'bg-red-500/10 text-red-400 ring-1 ring-red-500/30'
+                              : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+                          }`}>
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               )
             })}
           </div>
