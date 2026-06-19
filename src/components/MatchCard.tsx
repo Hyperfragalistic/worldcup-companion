@@ -29,13 +29,14 @@ const RESULT: Record<string, { label: string; cls: string }> = {
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
   match:        MatchWithPrediction
-  highlight?:   boolean   // gold ring when one team is the user's favourite
+  highlight?:   boolean
   defaultOpen?: boolean
-  variant?:     'full' | 'compact'  // compact = 2-col grid, no expand
+  variant?:     'full' | 'compact'
+  timezone?:    string  // IANA tz from geo; falls back to Intl if absent
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function MatchCard({ match, highlight = false, defaultOpen = false, variant = 'full' }: Props) {
+export default function MatchCard({ match, highlight = false, defaultOpen = false, variant = 'full', timezone }: Props) {
   const navigate      = useNavigate()
   const [open, setOpen] = useState(defaultOpen)
   const status         = deriveStatus(match)
@@ -51,9 +52,9 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
   // Whether the "Predict" CTA should be emphasised
   const wantsPrediction = isUpcoming && !pred
 
-  const localTz    = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const showLocal  = localTz !== 'UTC'
-  const localTime  = showLocal ? formatKickoffLocal(match.starts_at, localTz) : null
+  // Use geo-detected timezone; fall back to browser Intl if not yet resolved
+  const localTz   = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  const localTime = localTz !== 'UTC' ? formatKickoffLocal(match.starts_at, localTz) : null
 
   function goToMatch()   { navigate(`/match/${match.id}`) }
   function goToChat()    { navigate(`/match/${match.id}`) } // chat is on same page

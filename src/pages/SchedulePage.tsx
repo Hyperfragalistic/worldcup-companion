@@ -416,7 +416,7 @@ export default function SchedulePage() {
                 </h2>
                 <div className={activeView === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
                   {relevantMatches.map(match => (
-                    <MatchCard key={match.id} match={match} highlight variant={activeView === 'grid' ? 'compact' : 'full'} />
+                    <MatchCard key={match.id} match={match} highlight variant={activeView === 'grid' ? 'compact' : 'full'} timezone={geo.timezone ?? undefined} />
                   ))}
                 </div>
                 <div className="mt-6 flex items-center gap-3">
@@ -483,6 +483,7 @@ export default function SchedulePage() {
                         match={match}
                         variant={activeView === 'grid' ? 'compact' : 'full'}
                         highlight={!!favoriteTeam && (match.team1 === favoriteTeam || match.team2 === favoriteTeam)}
+                        timezone={geo.timezone ?? undefined}
                       />
                     ))}
                   </div>

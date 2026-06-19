@@ -5,7 +5,8 @@ import { useMatch } from '../hooks/useMatch'
 import { useChat } from '../hooks/useChat'
 import { useProfile } from '../hooks/useProfile'
 import { useSupabase } from '../providers/SupabaseProvider'
-import { teamFlag, deriveStatus, formatFullKickoff, isLocked, scorePrediction } from '../lib/utils'
+import { teamFlag, deriveStatus, formatFullKickoff, formatKickoffLocal, isLocked, scorePrediction } from '../lib/utils'
+import { useGeoLocation } from '../hooks/useGeoLocation'
 import BottomNav from '../components/BottomNav'
 import OddsDisplay from '../components/OddsDisplay'
 
@@ -54,6 +55,8 @@ export default function MatchPage() {
   const { profile }    = useProfile()
   const { match, prediction, loading, error, savePrediction } = useMatch(id)
   const { messages, sending, error: chatError, sendMessage, bottomRef } = useChat(id)
+  const geo = useGeoLocation()
+  const localTz = geo.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 
   const [homeScore,  setHomeScore]  = useState(0)
   const [awayScore,  setAwayScore]  = useState(0)
@@ -155,7 +158,16 @@ export default function MatchPage() {
                 <span className="text-lg font-semibold text-gray-400">vs</span>
               )}
               <p className="mt-1 text-center text-[11px] text-gray-500">
-                {status === 'finished' ? 'Full time' : formatFullKickoff(match.starts_at)}
+                {status === 'finished' ? 'Full time' : (
+                  <>
+                    {formatFullKickoff(match.starts_at)}
+                    {localTz !== 'UTC' && (
+                      <span className="block text-gray-600">
+                        {formatKickoffLocal(match.starts_at, localTz)} local
+                      </span>
+                    )}
+                  </>
+                )}
               </p>
               {match.venue && (
                 <p className="mt-0.5 max-w-[160px] text-center text-[10px] text-gray-600 leading-tight">
