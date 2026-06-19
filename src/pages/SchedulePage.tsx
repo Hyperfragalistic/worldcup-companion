@@ -38,16 +38,11 @@ function groupByDate(ms: MatchWithPrediction[]) {
   return map
 }
 
-/** Short label for date strip: "Today", "Sat 21", "Jul 4" */
-function dateStripLabel(dateStr: string, today: string): string {
-  if (dateStr === today) return 'Today'
-  const d = new Date(dateStr + 'T12:00:00')
-  const month = d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
-  const day   = d.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })
-  const weekday = d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
-  // Show weekday for dates within 2 weeks, month+day for further out
-  const daysOut = (new Date(dateStr + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86_400_000
-  return Math.abs(daysOut) <= 14 ? `${weekday} ${day}` : `${month} ${day}`
+/** "Jun 18" for every date — uniform across the strip */
+function dateStripLabel(dateStr: string): string {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', timeZone: 'UTC',
+  })
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -347,27 +342,23 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Date strip — jump-to navigator (shows dates in filtered result) */}
+        {/* Date strip — single-line pills, uniform "Jun 18" format */}
         {!loading && filteredDates.length > 1 && (
           <div ref={dateStripRef}
-            className="flex gap-1.5 overflow-x-auto px-4 pb-3 scrollbar-none border-t border-white/5 pt-2">
+            className="flex gap-1.5 overflow-x-auto px-4 pb-2.5 scrollbar-none border-t border-white/5 pt-2">
             {filteredDates.map(date => {
-              const isToday  = date === today
-              const hasLive  = byDate.get(date)?.some(m => deriveStatus(m) === 'live') ?? false
-              const count    = byDate.get(date)?.length ?? 0
+              const isToday = date === today
+              const hasLive = byDate.get(date)?.some(m => deriveStatus(m) === 'live') ?? false
               return (
                 <button key={date} onClick={() => scrollToDate(date)}
-                  className={`flex flex-shrink-0 flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-center transition-colors ${
+                  className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
                     isToday
-                      ? 'bg-wc-gold/20 text-wc-gold'
+                      ? 'bg-wc-gold/20 text-wc-gold ring-1 ring-wc-gold/40'
+                      : hasLive
+                      ? 'bg-red-500/10 text-red-400 ring-1 ring-red-500/30'
                       : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
                   }`}>
-                  <span className="text-[11px] font-semibold leading-none">
-                    {dateStripLabel(date, today)}
-                  </span>
-                  <span className={`text-[9px] leading-none ${hasLive ? 'text-red-400' : 'text-gray-600'}`}>
-                    {hasLive ? '● live' : `${count}m`}
-                  </span>
+                  {dateStripLabel(date)}
                 </button>
               )
             })}
@@ -458,7 +449,7 @@ export default function SchedulePage() {
                   <div className={`mb-3 flex items-center gap-2 ${hasLiveToday ? 'text-red-400' : 'text-gray-400'}`}>
                     {hasLiveToday && <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />}
                     <h2 className="text-sm font-semibold">
-                      {date === today ? `Today — ${formatMatchDate(date)}` : formatMatchDate(date)}
+                      {formatMatchDate(date)}{date === today ? ' · Today' : ''}
                     </h2>
                     <span className="ml-auto text-[11px] text-gray-600">
                       {dayMatches.length} match{dayMatches.length !== 1 ? 'es' : ''}

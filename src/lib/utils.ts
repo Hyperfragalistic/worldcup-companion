@@ -4,13 +4,12 @@ import type { Match } from './database.types'
 // Date / time formatting
 // ---------------------------------------------------------------------------
 
-/** '2026-06-20' → 'Saturday, June 20' */
+/** '2026-06-20' → 'Jun 20' */
 export function formatMatchDate(dateStr: string): string {
-  // Append T00:00:00 to parse as local midnight, not UTC midnight
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'long',
-    month:   'long',
-    day:     'numeric',
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+    month:    'short',
+    day:      'numeric',
+    timeZone: 'UTC',
   })
 }
 
