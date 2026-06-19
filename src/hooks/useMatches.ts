@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useSupabase } from '../providers/SupabaseProvider'
 import type { Match, Prediction, MatchWithPrediction } from '../lib/database.types'
@@ -10,35 +10,59 @@ interface UseMatchesReturn {
   refetch: () => void
 }
 
+function merge(ms: Match[], ps: Prediction[]): MatchWithPrediction[] {
+  return ms.map(m => ({
+    ...m,
+    my_prediction: ps.find(p => p.match_id === m.id) ?? null,
+  }))
+}
+
 export function useMatches(): UseMatchesReturn {
   const { user } = useSupabase()
-  const [matches, setMatches] = useState<MatchWithPrediction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState<string | null>(null)
-  const [tick,    setTick]    = useState(0)
+  const [rawMatches,   setRawMatches]   = useState<Match[]>([])
+  const [predictions,  setPredictions]  = useState<Prediction[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     if (!user) return
-
     setLoading(true)
-
-    Promise.all([
+    const [matchRes, predRes] = await Promise.all([
       supabase.from('matches').select('*').order('starts_at', { ascending: true }),
       supabase.from('predictions').select('*').eq('user_id', user.id),
-    ]).then(([matchesRes, predsRes]) => {
-      if (matchesRes.error) { setError(matchesRes.error.message); setLoading(false); return }
+    ])
+    if (matchRes.error) { setError(matchRes.error.message); setLoading(false); return }
+    setRawMatches((matchRes.data ?? []) as Match[])
+    setPredictions((predRes.data ?? []) as Prediction[])
+    setError(null)
+    setLoading(false)
+  }, [user])
 
-      const predictions: Prediction[] = predsRes.data ?? []
+  // Initial + manual refetch
+  useEffect(() => { fetchAll() }, [fetchAll])
 
-      const merged: MatchWithPrediction[] = (matchesRes.data as Match[]).map(m => ({
-        ...m,
-        my_prediction: predictions.find(p => p.match_id === m.id) ?? null,
-      }))
+  // Realtime: patch individual match rows (scores, status) as they update
+  useEffect(() => {
+    if (!user) return
+    const ch = supabase
+      .channel('matches-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'matches' },
+        payload => {
+          setRawMatches(prev =>
+            prev.map(m => m.id === (payload.new as Match).id ? { ...m, ...(payload.new as Match) } : m)
+          )
+        },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [user])
 
-      setMatches(merged)
-      setLoading(false)
-    })
-  }, [user, tick])
-
-  return { matches, loading, error, refetch: () => setTick(t => t + 1) }
+  return {
+    matches: merge(rawMatches, predictions),
+    loading,
+    error,
+    refetch: fetchAll,
+  }
 }

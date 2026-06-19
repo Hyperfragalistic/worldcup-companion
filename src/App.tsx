@@ -93,6 +93,11 @@ function AppRoutes() {
         <ProtectedRoute><SchedulePage /></ProtectedRoute>
       } />
 
+      {/* /schedule is a canonical alias — BottomNav links to "/" but sharing /schedule?tab=… works */}
+      <Route path="/schedule" element={
+        <ProtectedRoute><SchedulePage /></ProtectedRoute>
+      } />
+
       <Route path="/match/:id" element={
         <ProtectedRoute><MatchPage /></ProtectedRoute>
       } />

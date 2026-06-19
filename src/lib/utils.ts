@@ -79,35 +79,66 @@ export function isLocked(match: Match): boolean {
 // ---------------------------------------------------------------------------
 
 const FLAGS: Record<string, string> = {
-  Argentina:   '🇦🇷',
-  Australia:   '🇦🇺',
-  Belgium:     '🇧🇪',
-  Brazil:      '🇧🇷',
-  Cameroon:    '🇨🇲',
-  Canada:      '🇨🇦',
-  Croatia:     '🇭🇷',
-  Denmark:     '🇩🇰',
-  Ecuador:     '🇪🇨',
-  England:     '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  France:      '🇫🇷',
-  Germany:     '🇩🇪',
-  Ghana:       '🇬🇭',
-  Iran:        '🇮🇷',
-  Japan:       '🇯🇵',
-  Mexico:      '🇲🇽',
-  Morocco:     '🇲🇦',
-  Netherlands: '🇳🇱',
-  Nigeria:     '🇳🇬',
-  Poland:      '🇵🇱',
-  Portugal:    '🇵🇹',
-  Senegal:     '🇸🇳',
-  'South Korea': '🇰🇷',
-  Spain:       '🇪🇸',
-  Switzerland: '🇨🇭',
-  Tunisia:     '🇹🇳',
-  USA:         '🇺🇸',
-  Uruguay:     '🇺🇾',
-  Wales:       '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  // Group A
+  Mexico:          '🇲🇽',
+  'South Africa':  '🇿🇦',
+  'South Korea':   '🇰🇷',
+  Czechia:         '🇨🇿',
+  // Group B
+  Canada:          '🇨🇦',
+  Bosnia:          '🇧🇦',
+  Qatar:           '🇶🇦',
+  Switzerland:     '🇨🇭',
+  // Group C
+  Brazil:          '🇧🇷',
+  Morocco:         '🇲🇦',
+  Haiti:           '🇭🇹',
+  Scotland:        '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  // Group D
+  USA:             '🇺🇸',
+  Paraguay:        '🇵🇾',
+  Australia:       '🇦🇺',
+  Turkiye:         '🇹🇷',
+  // Group E
+  Germany:         '🇩🇪',
+  Curacao:         '🇨🇼',
+  'Ivory Coast':   '🇨🇮',
+  Ecuador:         '🇪🇨',
+  // Group F
+  Netherlands:     '🇳🇱',
+  Japan:           '🇯🇵',
+  Sweden:          '🇸🇪',
+  Tunisia:         '🇹🇳',
+  // Group G
+  Belgium:         '🇧🇪',
+  Egypt:           '🇪🇬',
+  Iran:            '🇮🇷',
+  'New Zealand':   '🇳🇿',
+  // Group H
+  Spain:           '🇪🇸',
+  'Cape Verde':    '🇨🇻',
+  'Saudi Arabia':  '🇸🇦',
+  Uruguay:         '🇺🇾',
+  // Group I
+  France:          '🇫🇷',
+  Senegal:         '🇸🇳',
+  Iraq:            '🇮🇶',
+  Norway:          '🇳🇴',
+  // Group J
+  Argentina:       '🇦🇷',
+  Algeria:         '🇩🇿',
+  Austria:         '🇦🇹',
+  Jordan:          '🇯🇴',
+  // Group K
+  Portugal:        '🇵🇹',
+  'DR Congo':      '🇨🇩',
+  Uzbekistan:      '🇺🇿',
+  Colombia:        '🇨🇴',
+  // Group L
+  England:         '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  Croatia:         '🇭🇷',
+  Ghana:           '🇬🇭',
+  Panama:          '🇵🇦',
 }
 
 export function teamFlag(name: string): string {
@@ -121,35 +152,66 @@ export function teamFlag(name: string): string {
 // Countries not in the WC 2026 roster are intentionally absent.
 // ---------------------------------------------------------------------------
 export const WC_TEAM_BY_COUNTRY: Record<string, string> = {
-  AR:     'Argentina',
-  AU:     'Australia',
-  BE:     'Belgium',
-  BR:     'Brazil',
-  CM:     'Cameroon',
-  CA:     'Canada',
-  HR:     'Croatia',
-  DK:     'Denmark',
-  EC:     'Ecuador',
-  FR:     'France',
-  DE:     'Germany',
-  GH:     'Ghana',
-  IR:     'Iran',
-  JP:     'Japan',
-  MX:     'Mexico',
-  MA:     'Morocco',
-  NL:     'Netherlands',
-  NG:     'Nigeria',
-  PL:     'Poland',
-  PT:     'Portugal',
-  SN:     'Senegal',
-  KR:     'South Korea',
-  ES:     'Spain',
-  CH:     'Switzerland',
-  TN:     'Tunisia',
-  US:     'USA',
-  UY:     'Uruguay',
-  GB:     'England',
-  'GB-WLS': 'Wales',
+  // Group A
+  MX: 'Mexico',
+  ZA: 'South Africa',
+  KR: 'South Korea',
+  CZ: 'Czechia',
+  // Group B
+  CA: 'Canada',
+  BA: 'Bosnia',
+  QA: 'Qatar',
+  CH: 'Switzerland',
+  // Group C
+  BR: 'Brazil',
+  MA: 'Morocco',
+  HT: 'Haiti',
+  // Group D
+  US: 'USA',
+  PY: 'Paraguay',
+  AU: 'Australia',
+  TR: 'Turkiye',
+  // Group E
+  DE: 'Germany',
+  CW: 'Curacao',
+  CI: 'Ivory Coast',
+  EC: 'Ecuador',
+  // Group F
+  NL: 'Netherlands',
+  JP: 'Japan',
+  SE: 'Sweden',
+  TN: 'Tunisia',
+  // Group G
+  BE: 'Belgium',
+  EG: 'Egypt',
+  IR: 'Iran',
+  NZ: 'New Zealand',
+  // Group H
+  ES: 'Spain',
+  CV: 'Cape Verde',
+  SA: 'Saudi Arabia',
+  UY: 'Uruguay',
+  // Group I
+  FR: 'France',
+  SN: 'Senegal',
+  IQ: 'Iraq',
+  NO: 'Norway',
+  // Group J
+  AR: 'Argentina',
+  DZ: 'Algeria',
+  AT: 'Austria',
+  JO: 'Jordan',
+  // Group K
+  PT: 'Portugal',
+  CD: 'DR Congo',
+  UZ: 'Uzbekistan',
+  CO: 'Colombia',
+  // Group L
+  GB:       'England',
+  'GB-SCT': 'Scotland',
+  HR:       'Croatia',
+  GH:       'Ghana',
+  PA:       'Panama',
 }
 
 // ---------------------------------------------------------------------------
