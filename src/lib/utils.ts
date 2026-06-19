@@ -66,7 +66,9 @@ export function deriveStatus(match: Match): 'upcoming' | 'live' | 'finished' {
   const now   = Date.now()
   const end   = start + 2 * 60 * 60 * 1000 // assume 2-hour matches
   if (now >= start && now <= end) return 'live'
-  if (now > end)  return 'finished'
+  // Only auto-finish by time if the match has actual scores — prevents hiding
+  // Predict on matches that are past their slot but not yet marked finished in DB
+  if (now > end && match.score1 !== null) return 'finished'
   return 'upcoming'
 }
 
