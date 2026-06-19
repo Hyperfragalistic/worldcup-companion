@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Trophy, X } from 'lucide-react'
+import { RotateCcw, Search, Star, Trophy, X } from 'lucide-react'
 import Layout from '../components/Layout'
 import MatchCard from '../components/MatchCard'
 import { useMatches } from '../hooks/useMatches'
@@ -9,23 +9,29 @@ import { useGeoLocation } from '../hooks/useGeoLocation'
 import { deriveStatus, formatMatchDate, teamFlag, WC_TEAM_BY_COUNTRY } from '../lib/utils'
 import type { MatchWithPrediction } from '../lib/database.types'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 type TabId = 'today' | 'myteam' | 'upcoming' | 'all'
 
-interface Tab {
-  id:    TabId
-  label: string
-  count: number
-}
+const GROUP_FILTER_CHIPS = [
+  ...['A','B','C','D','E','F','G','H','I','J','K','L'].map(g => ({ label: g,      value: g,              isGroup: true  })),
+  { label: 'R32',   value: 'Round of 32',   isGroup: false },
+  { label: 'R16',   value: 'Round of 16',   isGroup: false },
+  { label: 'QF',    value: 'Quarter-final', isGroup: false },
+  { label: 'SF',    value: 'Semi-final',    isGroup: false },
+  { label: '3rd',   value: 'Third Place',   isGroup: false },
+  { label: 'Final', value: 'Final',         isGroup: false },
+]
+
+const GROUP_VALUES = new Set(['A','B','C','D','E','F','G','H','I','J','K','L'])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function todayDateString(): string {
-  return new Date().toLocaleDateString('en-CA') // 'YYYY-MM-DD' in local time
+function todayDateString() {
+  return new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 }
 
-function groupByDate(matches: MatchWithPrediction[]): Map<string, MatchWithPrediction[]> {
+function groupByDate(ms: MatchWithPrediction[]) {
   const map = new Map<string, MatchWithPrediction[]>()
-  for (const m of matches) {
+  for (const m of ms) {
     if (!map.has(m.match_date)) map.set(m.match_date, [])
     map.get(m.match_date)!.push(m)
   }
@@ -39,11 +45,12 @@ export default function SchedulePage() {
   const geo                         = useGeoLocation()
   const [params, setParams]         = useSearchParams()
 
-  // Persist tab + search in URL so refreshes and back-nav restore state
-  const activeTab = (params.get('tab') as TabId | null) ?? 'today'
-  const searchRaw = params.get('q') ?? ''
+  // URL state
+  const activeTab   = (params.get('tab') as TabId | null) ?? 'today'
+  const searchRaw   = params.get('q')      ?? ''
+  const groupFilter = params.get('group')  ?? ''
 
-  // Local search input (instant) — URL param is the debounced source of truth
+  // Local search value — instant feedback, debounced write to URL
   const [searchInput, setSearchInput] = useState(searchRaw)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -52,7 +59,7 @@ export default function SchedulePage() {
   const updateRef    = useRef(updateProfile)
   useEffect(() => { updateRef.current = updateProfile }, [updateProfile])
 
-  // Auto-save geo → favorite team on first load if unset
+  // Auto-save geo → favorite team silently on first load
   useEffect(() => {
     if (autoSaved.current || profile === null || favoriteTeam) return
     if (geo.loading || !geo.countryCode) return
@@ -62,8 +69,18 @@ export default function SchedulePage() {
     updateRef.current({ favorite_team: detected })
   }, [profile, favoriteTeam, geo.loading, geo.countryCode])
 
-  // Sync input when URL param changes externally (e.g. back/forward)
+  // Sync input when URL changes externally (browser back/forward)
   useEffect(() => { setSearchInput(params.get('q') ?? '') }, [params])
+
+  // ── URL mutators ────────────────────────────────────────────────────────────
+  const setTab = useCallback((id: TabId) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', id)
+      next.delete('group') // clear group filter when switching tabs
+      return next
+    }, { replace: true })
+  }, [setParams])
 
   const handleSearch = useCallback((value: string) => {
     setSearchInput(value)
@@ -71,34 +88,43 @@ export default function SchedulePage() {
     debounceRef.current = setTimeout(() => {
       setParams(prev => {
         const next = new URLSearchParams(prev)
-        if (value) next.set('q', value)
+        if (value.trim()) next.set('q', value)
         else next.delete('q')
         return next
       }, { replace: true })
     }, 300)
   }, [setParams])
 
-  const setTab = useCallback((id: TabId) => {
-    setParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.set('tab', id)
-      return next
-    }, { replace: true })
-  }, [setParams])
-
   const handleClearSearch = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     setSearchInput('')
+    setParams(prev => { const n = new URLSearchParams(prev); n.delete('q'); return n }, { replace: true })
+  }, [setParams])
+
+  const setGroup = useCallback((value: string) => {
     setParams(prev => {
       const next = new URLSearchParams(prev)
-      next.delete('q')
+      if (value) next.set('group', value)
+      else next.delete('group')
       return next
     }, { replace: true })
   }, [setParams])
 
-  const today = todayDateString()
+  const handleReset = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setSearchInput('')
+    setParams(prev => {
+      const next = new URLSearchParams()
+      next.set('tab', prev.get('tab') ?? 'today')
+      return next
+    }, { replace: true })
+  }, [setParams])
 
-  // Per-tab match counts (no search applied — shows "universe" for each tab)
+  // ── Derived state ───────────────────────────────────────────────────────────
+  const today = todayDateString()
+  const hasActiveFilters = !!searchRaw.trim() || !!groupFilter
+
+  // Tab counts — not affected by secondary filters (shows universe per tab)
   const counts = useMemo(() => {
     const live = matches.filter(m => deriveStatus(m) === 'live')
     return {
@@ -110,18 +136,18 @@ export default function SchedulePage() {
     }
   }, [matches, favoriteTeam, today])
 
-  const TABS: Tab[] = useMemo(() => [
-    { id: 'today',    label: counts.hasLive ? '● Live' : 'Today',    count: counts.today },
-    { id: 'myteam',   label: favoriteTeam ? `${teamFlag(favoriteTeam)} My Team` : 'My Team', count: counts.myteam },
-    { id: 'upcoming', label: 'Upcoming',  count: counts.upcoming },
-    { id: 'all',      label: 'All',       count: counts.all },
+  const TABS = useMemo(() => [
+    { id: 'today'    as TabId, label: counts.hasLive ? '● Live' : 'Today',    count: counts.today    },
+    { id: 'myteam'   as TabId, label: favoriteTeam ? `${teamFlag(favoriteTeam)} My Team` : 'My Team', count: counts.myteam   },
+    { id: 'upcoming' as TabId, label: 'Upcoming',  count: counts.upcoming },
+    { id: 'all'      as TabId, label: 'All',       count: counts.all      },
   ], [counts, favoriteTeam])
 
-  // Filtered matches for current tab + search
+  // Main filtered list: search → tab → group
   const filtered = useMemo(() => {
     let list = matches
 
-    // Search filter
+    // 1. Search
     const q = searchRaw.trim().toLowerCase()
     if (q) {
       list = list.filter(m =>
@@ -132,45 +158,86 @@ export default function SchedulePage() {
       )
     }
 
-    // Tab filter
+    // 2. Tab
     switch (activeTab) {
       case 'today':
-        return list.filter(m => deriveStatus(m) === 'live' || m.match_date === today)
+        list = list.filter(m => deriveStatus(m) === 'live' || m.match_date === today)
+        break
       case 'myteam':
-        if (!favoriteTeam) return list
-        return list.filter(m => m.team1 === favoriteTeam || m.team2 === favoriteTeam)
+        list = favoriteTeam
+          ? list.filter(m => m.team1 === favoriteTeam || m.team2 === favoriteTeam)
+          : list
+        break
       case 'upcoming':
-        return list.filter(m => deriveStatus(m) === 'upcoming')
-      case 'all':
-      default:
-        return list
+        list = list.filter(m => deriveStatus(m) === 'upcoming')
+        break
     }
-  }, [matches, searchRaw, activeTab, favoriteTeam, today])
+
+    // 3. Group / round filter
+    if (groupFilter) {
+      list = GROUP_VALUES.has(groupFilter)
+        ? list.filter(m => m.group_name === groupFilter)
+        : list.filter(m => m.round === groupFilter)
+    }
+
+    return list
+  }, [matches, searchRaw, activeTab, groupFilter, favoriteTeam, today])
 
   const byDate = useMemo(() => groupByDate(filtered), [filtered])
 
-  const isSearching = searchRaw.trim().length > 0
+  // "Relevant for You" — shown on All tab with no secondary filters when user has a team
+  const showRelevant = activeTab === 'all' && !searchRaw.trim() && !groupFilter && !!favoriteTeam
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const relevantMatches = useMemo((): MatchWithPrediction[] => {
+    if (!showRelevant || !favoriteTeam) return []
+    // Prioritise live, then soonest upcoming; exclude finished
+    return matches
+      .filter(m => (m.team1 === favoriteTeam || m.team2 === favoriteTeam) && deriveStatus(m) !== 'finished')
+      .sort((a, b) => {
+        const sa = deriveStatus(a), sb = deriveStatus(b)
+        if (sa === 'live' && sb !== 'live') return -1
+        if (sb === 'live' && sa !== 'live') return  1
+        return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+      })
+      .slice(0, 3)
+  }, [matches, favoriteTeam, showRelevant])
+
+  // Show group filter row on All / Upcoming tabs
+  const showGroupFilter = activeTab === 'all' || activeTab === 'upcoming'
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <Layout>
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-wc-dark/95 backdrop-blur">
+
         {/* Title row */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-2">
           <Trophy className="h-5 w-5 flex-shrink-0 text-wc-gold" />
           <h1 className="font-semibold text-white">World Cup 2026</h1>
-          {favoriteTeam && (
-            <span className="ml-auto flex items-center gap-1.5">
-              <span className="text-xl leading-none">{teamFlag(favoriteTeam)}</span>
-              <span className="text-xs font-medium text-wc-gold">{favoriteTeam}</span>
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Reset button — appears when any secondary filter is active */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-gray-300 transition hover:bg-white/20"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </button>
+            )}
+            {favoriteTeam && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-xl leading-none">{teamFlag(favoriteTeam)}</span>
+                <span className="text-xs font-medium text-wc-gold">{favoriteTeam}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Search bar */}
         <div className="relative mx-4 mb-2">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <input
             type="search"
             placeholder="Search teams, venues…"
@@ -181,22 +248,19 @@ export default function SchedulePage() {
           {searchInput && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
               aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Tab bar — horizontally scrollable */}
-        <div
-          className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-none"
-          role="tablist"
-        >
+        {/* Tab bar */}
+        <div className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-none" role="tablist">
           {TABS.map(tab => {
-            const isActive = activeTab === tab.id
-            const isLiveTab = tab.id === 'today' && counts.hasLive
+            const isActive   = activeTab === tab.id
+            const isLiveTab  = tab.id === 'today' && counts.hasLive
             return (
               <button
                 key={tab.id}
@@ -205,9 +269,7 @@ export default function SchedulePage() {
                 onClick={() => setTab(tab.id)}
                 className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                   isActive
-                    ? isLiveTab
-                      ? 'bg-red-500 text-white'
-                      : 'bg-wc-gold text-wc-dark'
+                    ? isLiveTab ? 'bg-red-500 text-white' : 'bg-wc-gold text-wc-dark'
                     : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200'
                 }`}
               >
@@ -223,33 +285,94 @@ export default function SchedulePage() {
             )
           })}
         </div>
+
+        {/* Group / round filter chips (All + Upcoming tabs only) */}
+        {showGroupFilter && (
+          <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 scrollbar-none">
+            {/* "All" clear chip */}
+            <button
+              onClick={() => setGroup('')}
+              className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                !groupFilter
+                  ? 'bg-white/20 text-white'
+                  : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+              }`}
+            >
+              All
+            </button>
+            {/* Divider between groups and knockouts */}
+            {GROUP_FILTER_CHIPS.map((chip, idx) => {
+              const isKnockoutFirst = !chip.isGroup && (idx === 0 || GROUP_FILTER_CHIPS[idx - 1].isGroup)
+              return (
+                <div key={chip.value} className="flex flex-shrink-0 items-center gap-1.5">
+                  {isKnockoutFirst && <div className="h-4 w-px bg-white/10" />}
+                  <button
+                    onClick={() => setGroup(groupFilter === chip.value ? '' : chip.value)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                      groupFilter === chip.value
+                        ? 'bg-wc-blue text-white'
+                        : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+                    }`}
+                  >
+                    {chip.isGroup ? `Grp ${chip.label}` : chip.label}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </header>
 
       {/* ── Content ── */}
       <div className="px-4 py-4">
 
-        {/* Loading */}
         {loading && (
           <div className="flex justify-center py-16">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-wc-gold border-t-transparent" />
           </div>
         )}
 
-        {/* Error */}
         {error && !loading && (
           <p className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">{error}</p>
         )}
 
-        {/* Match list */}
         {!loading && !error && (
           <div className="space-y-6">
 
-            {/* Search result label */}
-            {isSearching && (
+            {/* ── "Relevant for You" section (All tab, no secondary filters, has team) ── */}
+            {showRelevant && relevantMatches.length > 0 && (
+              <section>
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-wc-gold">
+                  <Star className="h-3.5 w-3.5 fill-wc-gold" />
+                  Relevant for You
+                  <span className="ml-auto text-[11px] font-normal text-gray-500">
+                    {teamFlag(favoriteTeam!)} {favoriteTeam}
+                  </span>
+                </h2>
+                <div className="space-y-3">
+                  {relevantMatches.map(match => (
+                    <MatchCard key={match.id} match={match} highlight />
+                  ))}
+                </div>
+                {/* Divider before full list */}
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-600">
+                    All {counts.all} matches
+                  </span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+              </section>
+            )}
+
+            {/* Active filter summary */}
+            {(searchRaw.trim() || groupFilter) && (
               <p className="text-xs text-gray-500">
                 {filtered.length === 0
-                  ? `No matches for "${searchRaw}"`
-                  : `${filtered.length} match${filtered.length !== 1 ? 'es' : ''} for "${searchRaw}"`}
+                  ? 'No matches found'
+                  : `${filtered.length} match${filtered.length !== 1 ? 'es' : ''}${
+                      groupFilter ? ` · ${groupFilter}` : ''
+                    }${searchRaw.trim() ? ` · "${searchRaw}"` : ''}`}
               </p>
             )}
 
@@ -262,12 +385,22 @@ export default function SchedulePage() {
                     ? 'No matches today'
                     : activeTab === 'myteam' && !favoriteTeam
                     ? 'Set a favourite team on your Profile to see their matches here'
+                    : hasActiveFilters
+                    ? 'No matches match the current filters'
                     : 'No matches found'}
                 </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={handleReset}
+                    className="mt-1 text-xs text-wc-gold underline underline-offset-2"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             )}
 
-            {/* Date groups */}
+            {/* Date-grouped match list */}
             {Array.from(byDate.entries()).map(([date, dayMatches]) => (
               <section key={date}>
                 <h2 className="mb-3 text-sm font-semibold text-gray-400">
@@ -287,6 +420,7 @@ export default function SchedulePage() {
                 </div>
               </section>
             ))}
+
           </div>
         )}
       </div>
