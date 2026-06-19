@@ -27,13 +27,14 @@ const RESULT: Record<string, { label: string; cls: string }> = {
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
-  match:      MatchWithPrediction
-  highlight?: boolean  // true when one of the teams is the user's favourite
+  match:        MatchWithPrediction
+  highlight?:   boolean   // gold ring when one team is the user's favourite
   defaultOpen?: boolean
+  variant?:     'full' | 'compact'  // compact = 2-col grid, no expand
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function MatchCard({ match, highlight = false, defaultOpen = false }: Props) {
+export default function MatchCard({ match, highlight = false, defaultOpen = false, variant = 'full' }: Props) {
   const navigate      = useNavigate()
   const [open, setOpen] = useState(defaultOpen)
   const status         = deriveStatus(match)
@@ -52,12 +53,73 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
   function goToMatch()   { navigate(`/match/${match.id}`) }
   function goToChat()    { navigate(`/match/${match.id}`) } // chat is on same page
 
+  // ── Compact variant (grid view) — tap navigates directly ──────────────────
+  if (variant === 'compact') {
+    return (
+      <button
+        onClick={goToMatch}
+        className={`w-full rounded-xl p-3 text-left ring-1 transition active:scale-[0.97] ${
+          highlight   ? 'bg-wc-gold/[0.07] ring-wc-gold/40' : 'bg-wc-surface ring-white/10'
+        } ${isLive ? 'ring-red-500/50' : ''}`}
+      >
+        {/* Round + status */}
+        <div className="mb-2 flex items-center justify-between gap-1">
+          <span className="truncate text-[10px] text-gray-500">
+            {match.group_name ? `Grp ${match.group_name}` : match.round}
+          </span>
+          <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide flex-shrink-0 ${
+            STATUS_BADGE[status]
+          } ${isLive ? 'animate-pulse' : ''}`}>
+            {isLive ? '● Live' : isFinished ? 'FT' : formatKickoff(match.starts_at)}
+          </span>
+        </div>
+
+        {/* Teams */}
+        <div className="flex items-center gap-1">
+          <div className="flex flex-1 flex-col items-center gap-0.5 min-w-0">
+            <span className="text-xl leading-none">{teamFlag(match.team1)}</span>
+            <span className="w-full truncate text-center text-[10px] font-semibold text-white leading-tight">
+              {match.team1}
+            </span>
+          </div>
+
+          <div className="flex min-w-[36px] flex-col items-center">
+            {!isUpcoming ? (
+              <span className={`text-base font-bold leading-none ${isLive ? 'text-red-400' : 'text-white'}`}>
+                {match.score1 ?? '-'}–{match.score2 ?? '-'}
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-gray-600">vs</span>
+            )}
+          </div>
+
+          <div className="flex flex-1 flex-col items-center gap-0.5 min-w-0">
+            <span className="text-xl leading-none">{teamFlag(match.team2)}</span>
+            <span className="w-full truncate text-center text-[10px] font-semibold text-white leading-tight">
+              {match.team2}
+            </span>
+          </div>
+        </div>
+
+        {/* Prediction dot */}
+        {pred && (
+          <div className="mt-2 flex justify-center">
+            <span className={`h-1.5 w-1.5 rounded-full ${
+              resultKey === 'exact'   ? 'bg-wc-gold'   :
+              resultKey === 'correct' ? 'bg-green-400' :
+              resultKey === 'wrong'   ? 'bg-red-400'   : 'bg-gray-500'
+            }`} />
+          </div>
+        )}
+      </button>
+    )
+  }
+
+  // ── Full variant (list view) ────────────────────────────────────────────────
   return (
     <div
       className={`rounded-xl ring-1 overflow-hidden transition-shadow ${
-        highlight
-          ? 'bg-wc-gold/[0.07] ring-wc-gold/40'
-          : 'bg-wc-surface ring-white/10'
+        highlight   ? 'bg-wc-gold/[0.07] ring-wc-gold/40' : 'bg-wc-surface ring-white/10'
       } ${isLive ? 'ring-red-500/40' : ''}`}
     >
       {/* ── Compact body (always visible) ── */}
