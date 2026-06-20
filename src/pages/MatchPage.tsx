@@ -10,6 +10,10 @@ import { useGeoLocation } from '../hooks/useGeoLocation'
 import BottomNav from '../components/BottomNav'
 import OddsDisplay from '../components/OddsDisplay'
 import { useScoreRefresh } from '../hooks/useScoreRefresh'
+import { useMatchEvents } from '../hooks/useMatchEvents'
+import LiveTimer     from '../components/LiveTimer'
+import PossessionBar from '../components/PossessionBar'
+import MatchTimeline from '../components/MatchTimeline'
 
 // ---------------------------------------------------------------------------
 // Score stepper — +/- buttons for mobile-friendly score input
@@ -94,6 +98,7 @@ export default function MatchPage() {
 
   const status  = deriveStatus(match)
   useScoreRefresh(id, status)
+  const { events, possession } = useMatchEvents(id, status)
   const locked  = isLocked(match)
   const username = profile?.username ?? 'Anonymous'
 
@@ -159,6 +164,7 @@ export default function MatchPage() {
               ) : (
                 <span className="text-lg font-semibold text-gray-400">vs</span>
               )}
+              <LiveTimer startsAt={match.starts_at} status={status} />
               <p className="mt-1 text-center text-[11px] text-gray-500">
                 {status === 'finished' ? 'Full time' : (
                   <>
@@ -186,8 +192,21 @@ export default function MatchPage() {
           </div>
         </div>
 
+        {/* Possession bar — only when data available */}
+        {possession && (
+          <PossessionBar
+            home={possession.home}
+            away={possession.away}
+            team1={match.team1}
+            team2={match.team2}
+          />
+        )}
+
         {/* Odds display */}
         <OddsDisplay matchId={id} team1={match.team1} team2={match.team2} />
+
+        {/* Match timeline */}
+        <MatchTimeline events={events} team1={match.team1} team2={match.team2} />
 
         {/* Prediction section */}
         <div className="mx-4 mb-4 rounded-xl bg-wc-surface p-4 ring-1 ring-white/10">
