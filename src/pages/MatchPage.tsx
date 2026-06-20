@@ -11,9 +11,11 @@ import BottomNav from '../components/BottomNav'
 import OddsDisplay from '../components/OddsDisplay'
 import { useScoreRefresh } from '../hooks/useScoreRefresh'
 import { useMatchEvents } from '../hooks/useMatchEvents'
+import { useMatchShots }  from '../hooks/useMatchShots'
 import LiveTimer     from '../components/LiveTimer'
 import PossessionBar from '../components/PossessionBar'
 import MatchTimeline from '../components/MatchTimeline'
+import ShotHeatmap   from '../components/ShotHeatmap'
 
 // ---------------------------------------------------------------------------
 // Score stepper — +/- buttons for mobile-friendly score input
@@ -99,6 +101,7 @@ export default function MatchPage() {
   const status  = deriveStatus(match)
   useScoreRefresh(id, status)
   const { events, possession } = useMatchEvents(id, status)
+  const { shots, stats }       = useMatchShots(id, status)
   const locked  = isLocked(match)
   const username = profile?.username ?? 'Anonymous'
 
@@ -207,6 +210,9 @@ export default function MatchPage() {
 
         {/* Match timeline */}
         <MatchTimeline events={events} team1={match.team1} team2={match.team2} />
+
+        {/* Shot heatmap */}
+        <ShotHeatmap shots={shots} stats={stats} team1={match.team1} team2={match.team2} />
 
         {/* Prediction section */}
         <div className="mx-4 mb-4 rounded-xl bg-wc-surface p-4 ring-1 ring-white/10">
