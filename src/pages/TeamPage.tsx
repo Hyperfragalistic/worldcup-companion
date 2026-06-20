@@ -24,11 +24,10 @@ const POS_NUM_BG: Record<Position, string> = {
 // ── TheSportsDB headshot fetch ────────────────────────────────────────────────
 async function fetchHeadshot(name: string): Promise<string | null> {
   try {
-    const encoded = encodeURIComponent(name)
-    const res  = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encoded}`)
+    const res  = await fetch(`/api/player-headshot?name=${encodeURIComponent(name)}`)
     if (!res.ok) return null
     const json = await res.json()
-    return (json.player?.[0]?.strThumb as string | undefined) ?? null
+    return (json.thumb as string | undefined) ?? null
   } catch {
     return null
   }
