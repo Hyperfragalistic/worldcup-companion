@@ -81,6 +81,13 @@ export default function MatchPage() {
   const [predError,  setPredError]  = useState<string | null>(null)
   const [chatInput,  setChatInput]  = useState('')
 
+  // Hooks must be called unconditionally — derive status before early returns,
+  // falling back to 'upcoming' while match data is still loading.
+  const status = match ? deriveStatus(match) : 'upcoming'
+  useScoreRefresh(id, status)
+  const { events, possession } = useMatchEvents(id, status)
+  const { shots, stats }       = useMatchShots(id, status)
+
   if (loading) {
     return (
       <div className="flex h-dvh items-center justify-center bg-wc-dark">
@@ -98,10 +105,6 @@ export default function MatchPage() {
     )
   }
 
-  const status  = deriveStatus(match)
-  useScoreRefresh(id, status)
-  const { events, possession } = useMatchEvents(id, status)
-  const { shots, stats }       = useMatchShots(id, status)
   const locked  = isLocked(match)
   const username = profile?.username ?? 'Anonymous'
 
