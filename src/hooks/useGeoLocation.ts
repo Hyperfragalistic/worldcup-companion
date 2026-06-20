@@ -47,7 +47,10 @@ export function useGeoLocation(): GeoLocationState {
             const address = data.address as Record<string, string> | undefined
             code = address?.country_code?.toUpperCase() ?? null
             name = address?.country ?? null
-            if (code === 'GB' && address?.state === 'Wales') code = 'GB-WLS'
+            if (code === 'GB') {
+              if (address?.state === 'Wales')   code = 'GB-WLS'
+              else if (address?.state === 'Scotland') code = 'GB-SCT'
+            }
           }
 
           if (tzRes.status === 'fulfilled' && tzRes.value.ok) {

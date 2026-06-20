@@ -7,14 +7,7 @@ import { WC_TEAM_BY_COUNTRY, teamFlag } from '../lib/utils'
 import type { Profile } from '../lib/database.types'
 import type { GeoLocationState } from '../hooks/useGeoLocation'
 
-// World Cup 2026 teams in alphabetical order
-const WC_TEAMS = [
-  'Argentina', 'Australia', 'Belgium', 'Brazil', 'Cameroon', 'Canada',
-  'Croatia', 'Denmark', 'Ecuador', 'England', 'France', 'Germany',
-  'Ghana', 'Iran', 'Japan', 'Mexico', 'Morocco', 'Netherlands',
-  'Nigeria', 'Poland', 'Portugal', 'Senegal', 'South Korea', 'Spain',
-  'Switzerland', 'Tunisia', 'USA', 'Uruguay', 'Wales',
-]
+const WC_TEAMS = [...new Set(Object.values(WC_TEAM_BY_COUNTRY))].sort()
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 

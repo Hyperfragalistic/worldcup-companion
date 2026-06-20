@@ -6,13 +6,7 @@ import { useGeoLocation } from '../hooks/useGeoLocation'
 import { supabase } from '../lib/supabaseClient'
 import { WC_TEAM_BY_COUNTRY, teamFlag } from '../lib/utils'
 
-const TEAMS = [
-  'Argentina', 'Australia', 'Belgium', 'Brazil', 'Cameroon', 'Canada',
-  'Croatia', 'Denmark', 'Ecuador', 'England', 'France', 'Germany',
-  'Ghana', 'Iran', 'Japan', 'Mexico', 'Morocco', 'Netherlands',
-  'Nigeria', 'Poland', 'Portugal', 'Senegal', 'South Korea', 'Spain',
-  'Switzerland', 'Tunisia', 'USA', 'Uruguay', 'Wales',
-]
+const TEAMS = [...new Set(Object.values(WC_TEAM_BY_COUNTRY))].sort()
 
 export default function ProfilePage() {
   const { profile, loading, updateProfile } = useProfile()
