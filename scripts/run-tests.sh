@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Helper script to run Phase 8 (and supports BASE_URL) tests cleanly.
+# Helper script to run all tests cleanly.
 # Usage:
 #   1. export SUPABASE_SERVICE_KEY=your-key
 #   2. export TEST_USER_EMAIL=your@email.com
 #   3. [optional] export BASE_URL=http://localhost:5173
-#   4. ./scripts/run-phase8.sh
+#   4. ./scripts/run-tests.sh
 #
 
 set -e
@@ -17,7 +17,7 @@ if [ -z "$SUPABASE_SERVICE_KEY" ]; then
   echo "Then run:"
   echo "  export SUPABASE_SERVICE_KEY=eyJhbGc..."
   echo "  export TEST_USER_EMAIL=you@example.com"
-  echo "  ./scripts/run-phase8.sh"
+  echo "  ./scripts/run-tests.sh"
   exit 1
 fi
 
@@ -29,7 +29,7 @@ fi
 
 BASE=${BASE_URL:-https://worldcup-companion-beta.vercel.app}
 
-echo "=== Running Phase 8 Live Features Test ==="
+echo "=== Running Live Features Test ==="
 echo "BASE: $BASE"
 echo "User: $TEST_USER_EMAIL"
 echo "BASE_URL env can be set for local (e.g. http://localhost:5173)"
