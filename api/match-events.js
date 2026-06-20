@@ -44,6 +44,12 @@ const ESPN_NAME_MAP = {
 
 const EMPTY = { events: [], possession: null, elapsed: null }
 
+function fetchWithTimeout(url, options = {}, ms = 5000) {
+  const ac = new AbortController()
+  const t  = setTimeout(() => ac.abort(), ms)
+  return fetch(url, { ...options, signal: ac.signal }).finally(() => clearTimeout(t))
+}
+
 function norm(name) {
   return ESPN_NAME_MAP[name] ?? name
 }
@@ -88,7 +94,7 @@ export default async function handler(req, res) {
 
     // ── 2. Fetch ESPN scoreboard for this date ───────────────────────────────
     const dateStr = new Date(match.starts_at).toISOString().slice(0, 10).replace(/-/g, '')
-    const boardRes = await fetch(
+    const boardRes = await fetchWithTimeout(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`,
       { headers: { 'User-Agent': 'WorldCupCompanion/1.0' } },
     )
@@ -138,7 +144,7 @@ export default async function handler(req, res) {
     // ── 6. Fetch ESPN summary for key events ─────────────────────────────────
     let parsedEvents = []
 
-    const summRes = await fetch(
+    const summRes = await fetchWithTimeout(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${espnEvent.id}`,
       { headers: { 'User-Agent': 'WorldCupCompanion/1.0' } },
     )

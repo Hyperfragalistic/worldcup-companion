@@ -42,9 +42,15 @@ function parseItems(xml) {
   return items
 }
 
+function fetchWithTimeout(url, options = {}, ms = 5000) {
+  const ac = new AbortController()
+  const t  = setTimeout(() => ac.abort(), ms)
+  return fetch(url, { ...options, signal: ac.signal }).finally(() => clearTimeout(t))
+}
+
 export default async function handler(req, res) {
   try {
-    const feedRes = await fetch(FEED_URL, {
+    const feedRes = await fetchWithTimeout(FEED_URL, {
       headers: { 'User-Agent': 'WorldCupCompanion/1.0 (RSS reader)' },
     })
 
