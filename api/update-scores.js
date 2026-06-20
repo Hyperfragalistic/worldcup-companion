@@ -172,12 +172,19 @@ export default async function handler(req, res) {
     const fmt       = d => new Date(d).toISOString().slice(0, 10).replace(/-/g, '')
     const todayFmt  = fmt(now)
 
-    // Unique YYYYMMDD strings for past pending matches + today
+    // Unique YYYYMMDD strings for past pending matches + today.
+    // Also include the prior day for early-UTC matches (ESPN buckets by
+    // US-ET, so 00:00–04:59 UTC = prior ET date in ESPN's index).
     const datesToFetch = [
       ...new Set([
         ...pending
           .filter(m => new Date(m.starts_at).getTime() < now)
-          .map(m => fmt(m.starts_at)),
+          .flatMap(m => {
+            const d = fmt(m.starts_at)
+            return new Date(m.starts_at).getUTCHours() < 5
+              ? [d, fmt(new Date(m.starts_at).getTime() - 86_400_000)]
+              : [d]
+          }),
         todayFmt,
       ]),
     ].sort()
