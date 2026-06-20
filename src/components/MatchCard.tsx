@@ -286,6 +286,22 @@ export default function MatchCard({ match, highlight = false, defaultOpen = fals
                 Full&nbsp;→
               </button>
             </div>
+
+            {/* Squad links */}
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => navigate(`/team/${match.team1}`)}
+                className="text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300 transition"
+              >
+                {teamFlag(match.team1)} {match.team1} Squad&nbsp;→
+              </button>
+              <button
+                onClick={() => navigate(`/team/${match.team2}`)}
+                className="text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300 transition"
+              >
+                {teamFlag(match.team2)} {match.team2} Squad&nbsp;→
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Send, Lock, Loader2 } from 'lucide-react'
 import { useMatch } from '../hooks/useMatch'
 import { useChat } from '../hooks/useChat'
@@ -143,10 +143,10 @@ export default function MatchPage() {
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
             {/* Team 1 */}
-            <div className="flex flex-1 flex-col items-center gap-2">
+            <Link to={`/team/${match.team1}`} className="flex flex-1 flex-col items-center gap-2 hover:opacity-80 transition">
               <span className="text-5xl">{teamFlag(match.team1)}</span>
               <span className="text-sm font-bold text-white">{match.team1}</span>
-            </div>
+            </Link>
 
             {/* Centre: score or time */}
             <div className="flex flex-col items-center px-4">
@@ -179,10 +179,10 @@ export default function MatchPage() {
             </div>
 
             {/* Team 2 */}
-            <div className="flex flex-1 flex-col items-center gap-2">
+            <Link to={`/team/${match.team2}`} className="flex flex-1 flex-col items-center gap-2 hover:opacity-80 transition">
               <span className="text-5xl">{teamFlag(match.team2)}</span>
               <span className="text-sm font-bold text-white">{match.team2}</span>
-            </div>
+            </Link>
           </div>
         </div>
 

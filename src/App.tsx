@@ -5,6 +5,7 @@ import AuthPage        from './pages/AuthPage'
 import SchedulePage    from './pages/SchedulePage'
 import MatchPage       from './pages/MatchPage'
 import ProfilePage     from './pages/ProfilePage'
+import TeamPage        from './pages/TeamPage'
 import WelcomeModal    from './components/WelcomeModal'
 import OnboardingModal from './components/OnboardingModal'
 import { useProfile }  from './hooks/useProfile'
@@ -104,6 +105,10 @@ function AppRoutes() {
 
       <Route path="/profile" element={
         <ProtectedRoute><ProfilePage /></ProtectedRoute>
+      } />
+
+      <Route path="/team/:teamName" element={
+        <ProtectedRoute><TeamPage /></ProtectedRoute>
       } />
 
       {/* Auth-aware catch-all: skip the double-redirect through ProtectedRoute */}
