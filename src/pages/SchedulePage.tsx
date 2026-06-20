@@ -40,13 +40,6 @@ function groupByDate(ms: MatchWithPrediction[]) {
   return map
 }
 
-/** "Jun 18" for every date — uniform across the strip */
-function dateStripLabel(dateStr: string): string {
-  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', timeZone: 'UTC',
-  })
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
   const { matches, loading, error } = useMatches()

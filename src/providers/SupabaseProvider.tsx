@@ -44,6 +44,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context + hook co-location is intentional
 export function useSupabase(): SupabaseContextValue {
   const ctx = useContext(SupabaseContext)
   if (!ctx) throw new Error('useSupabase must be used within <SupabaseProvider>')

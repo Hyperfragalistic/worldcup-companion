@@ -70,13 +70,14 @@ export default function MatchPage() {
   const [predSaving, setPredSaving] = useState(false)
 
   // Sync steppers when an existing prediction loads for the first time.
-  // Keyed on prediction.id so it fires once on load but not on every
-  // optimistic update (id stays the same after a save).
+  // `prediction` omitted: keyed on prediction.id so steppers sync once on load
+  // but don't reset on every optimistic update (id is stable after a save).
   useEffect(() => {
     if (prediction) {
       setHomeScore(prediction.home_score)
       setAwayScore(prediction.away_score)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prediction?.id])
   const [predError,  setPredError]  = useState<string | null>(null)
   const [chatInput,  setChatInput]  = useState('')

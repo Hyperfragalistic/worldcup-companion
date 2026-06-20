@@ -65,23 +65,27 @@ export default function OnboardingModal({ profile, geo, updateProfile, onComplet
   }, [username, user?.id])
 
   // ── Pre-fill country from geolocation if still empty ───────────────────────
+  // `country` omitted: the `!country` guard makes this fire only on first geo
+  // resolution; including it would re-run on every keystroke in the field.
   useEffect(() => {
     if (!geo.loading && geo.countryName && !country) {
       setCountry(geo.countryName)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo.loading, geo.countryName])
 
   // ── Pre-fill team from country whenever country changes ────────────────────
+  // `favoriteTeam` omitted: the early-return guard prevents overwriting a
+  // manual pick without needing it as a dependency.
   useEffect(() => {
     if (favoriteTeam) return  // don't overwrite a manual pick
 
-    // Map country name → country code → team
-    // geo gives us the code directly; for typed names we do a best-effort match
     const code = geo.countryCode ?? null
     if (code) {
       const suggested = WC_TEAM_BY_COUNTRY[code]
       if (suggested) setFavoriteTeam(suggested)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo.countryCode])
 
   // ── Navigation ──────────────────────────────────────────────────────────────

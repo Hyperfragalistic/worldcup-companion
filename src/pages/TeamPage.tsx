@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, X, ExternalLink, Loader2 } from 'lucide-react'
 import { ROSTERS, type Player, type Position } from '../data/rosters'
 import { teamFlag } from '../lib/utils'
