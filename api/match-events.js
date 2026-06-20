@@ -178,6 +178,8 @@ export default async function handler(req, res) {
 
     parsedEvents.sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0))
 
+    const maxAge = match.status === 'finished' ? 300 : 30
+    res.setHeader('Cache-Control', `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`)
     return res.status(200).json({ events: parsedEvents, possession, elapsed })
 
   } catch {

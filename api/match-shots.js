@@ -184,6 +184,8 @@ export default async function handler(req, res) {
       ? { home: homeStats, away: awayStats }
       : { home: awayStats, away: homeStats }
 
+    const maxAge = match.status === 'finished' ? 300 : 30
+    res.setHeader('Cache-Control', `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`)
     return res.status(200).json({ shots, stats })
 
   } catch {
