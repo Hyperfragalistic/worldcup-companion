@@ -113,8 +113,10 @@ export default async function handler(req, res) {
   }
 
   // 2. Fetch all non-finished matches on the same date from Supabase
+  const startMs    = new Date(target.starts_at).getTime()
   const datePrefix = new Date(target.starts_at).toISOString().slice(0, 10)
   const dateStr    = datePrefix.replace(/-/g, '')
+  const datePrev   = new Date(startMs - 86_400_000).toISOString().slice(0, 10).replace(/-/g, '')
 
   const dayRes = await fetch(
     `${SUPABASE_URL}/rest/v1/matches?starts_at=gte.${datePrefix}T00:00:00Z&starts_at=lt.${datePrefix}T23:59:59Z&status=neq.finished&select=id,team1,team2`,
@@ -123,8 +125,12 @@ export default async function handler(req, res) {
   const dayMatches = await dayRes.json()
   const lookup = new Map(dayMatches.map(m => [`${m.team1}|${m.team2}`, m]))
 
-  // 3. Fetch ESPN scoreboard for that date and patch matching rows
-  const events  = await fetchEspnDay(dateStr)
+  // 3. Fetch ESPN scoreboard — try UTC date; also prior day for early-UTC
+  //    matches (ESPN buckets by US-ET, so 00:00–04:59 UTC = prior ET day).
+  const espnEvents = await fetchEspnDay(dateStr)
+  const events     = new Date(target.starts_at).getUTCHours() < 5
+    ? [...espnEvents, ...await fetchEspnDay(datePrev)]
+    : espnEvents
   const results = { updated: 0, skipped: 0 }
 
   for (const event of events) {
