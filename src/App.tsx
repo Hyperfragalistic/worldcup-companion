@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { SupabaseProvider, useSupabase } from './providers/SupabaseProvider'
+import { ProfileProvider } from './providers/ProfileProvider'
 import AuthPage        from './pages/AuthPage'
 import SchedulePage    from './pages/SchedulePage'
 import MatchPage       from './pages/MatchPage'
@@ -120,10 +121,12 @@ function AppRoutes() {
 export default function App() {
   return (
     <SupabaseProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <OnboardingGate />
-      </BrowserRouter>
+      <ProfileProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <OnboardingGate />
+        </BrowserRouter>
+      </ProfileProvider>
     </SupabaseProvider>
   )
 }
