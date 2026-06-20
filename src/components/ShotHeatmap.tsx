@@ -1,45 +1,66 @@
 import type { Shot, ShotStats } from '../hooks/useMatchShots'
 
-// ── Coordinate mapping ────────────────────────────────────────────────────────
-// viewBox: "0 0 100 78"
-//   width  100 = full pitch width  (ESPN Y: 0–100)
-//   height  78 = attacking half + small goal overhang (ESP X: 50–100, plus goal above)
+// ── Full pitch coordinate mapping ─────────────────────────────────────────────
+// viewBox: "0 0 100 160" (width = 68m pitch, height ≈ 105m + goal over hangs)
 //
-// espnX: 100 = goal line (top of SVG, y≈3), 50 = halfway (bottom, y≈78)
-// espnY: 0   = left touchline (x=0),        100 = right touchline (x=100)
+// Fixed orientation (vertical):
+//   y=0 (top)    → one goal
+//   y≈160 (bottom) → opposite goal
+//
+// Home team (gold) attacks the BOTTOM goal.
+// Away team (blue)  attacks the TOP goal.
+//
+// Data notes:
+//   espnX: 50-100, 100 = the goal being attacked by *that shot*
+//   espnY: 0-100 (left to right touchlines)
+//
+// We remap espnX per side so shots end up on the correct half of the full pitch.
 
-const VB_W     = 100   // viewBox width
-const VB_H     = 78    // viewBox height (includes 3 above goal line for goal)
-const GOAL_Y   = 3     // y where the goal line sits (leaves room for goal outline above)
-const HALF_H   = 75    // px from goal line to halfway — maps ESPN X 50→100
+const VB_W = 100
+const GOAL_OVERHANG = 4
+const FIELD_H = 152          // 105m scaled
+const VB_H = GOAL_OVERHANG * 2 + FIELD_H
 
-const toSvgX = (espnY: number) => espnY                               // 0–100
-const toSvgY = (espnX: number) => GOAL_Y + (100 - espnX) / 50 * HALF_H  // 3 – 78
+const TOP_GOAL_LINE_Y = GOAL_OVERHANG
+const BOTTOM_GOAL_LINE_Y = GOAL_OVERHANG + FIELD_H
+const HALFWAY_Y = GOAL_OVERHANG + FIELD_H / 2
 
-// ── Pitch geometry constants (proportional to a 105m × 68m pitch) ─────────────
-// All values in SVG units (pitch width = 100 units = 68m → 1 unit ≈ 0.68m)
-const PITCH_LEFT  = 0
+const toSvgX = (espnY: number) => espnY
+
+// Map espnX so home shots attack bottom, away shots attack top
+const toSvgY = (espnX: number, side: 'home' | 'away') => {
+  const norm = side === 'home' ? espnX : 100 - espnX
+  return GOAL_OVERHANG + (norm / 100) * FIELD_H
+}
+
+// ── Pitch geometry (proportional to 105m × 68m pitch) ─────────────────────────
+const PITCH_LEFT = 0
 const PITCH_RIGHT = 100
-const PITCH_TOP   = GOAL_Y      // goal line
-const PITCH_BOT   = GOAL_Y + HALF_H  // halfway line
+const PITCH_TOP = TOP_GOAL_LINE_Y
 
-// Penalty area: 40.32m wide centred, 16.5m deep
-const PA_LEFT  = (68 - 40.32) / 68 * 100    // ≈ 20.7
-const PA_RIGHT = PA_LEFT + 40.32 / 68 * 100  // ≈ 79.3
-const PA_DEPTH = 16.5 / 52.5 * HALF_H       // ≈ 23.6 units
+const FIELD_SCALE = FIELD_H / 105
 
-// 6-yard box: 18.32m wide centred, 5.5m deep
-const SB_LEFT  = (68 - 18.32) / 68 * 100   // ≈ 36.1
-const SB_RIGHT = SB_LEFT + 18.32 / 68 * 100 // ≈ 63.9
-const SB_DEPTH = 5.5 / 52.5 * HALF_H       // ≈ 7.9 units
+// Penalty area
+const PA_LEFT = (68 - 40.32) / 68 * 100
+const PA_RIGHT = PA_LEFT + 40.32 / 68 * 100
+const PA_DEPTH = 16.5 * FIELD_SCALE
 
-// Goal: 7.32m wide centred (drawn above goal line)
-const GOAL_LEFT  = (68 - 7.32) / 68 * 100   // ≈ 44.6
-const GOAL_RIGHT = GOAL_LEFT + 7.32 / 68 * 100 // ≈ 55.4
+// 6-yard box
+const SB_LEFT = (68 - 18.32) / 68 * 100
+const SB_RIGHT = SB_LEFT + 18.32 / 68 * 100
+const SB_DEPTH = 5.5 * FIELD_SCALE
 
-// Penalty spot: 11m from goal
+// Goal width
+const GOAL_LEFT = (68 - 7.32) / 68 * 100
+const GOAL_RIGHT = GOAL_LEFT + 7.32 / 68 * 100
+
+// Penalty spots
 const PEN_X = 50
-const PEN_Y = GOAL_Y + 11 / 52.5 * HALF_H  // ≈ 18.7
+const TOP_PEN_Y = TOP_GOAL_LINE_Y + 11 * FIELD_SCALE
+const BOTTOM_PEN_Y = BOTTOM_GOAL_LINE_Y - 11 * FIELD_SCALE
+
+// Centre circle
+const CENTER_R = 9.15 * FIELD_SCALE
 
 // ── Shot visual config ────────────────────────────────────────────────────────
 const DOT_CONFIG = {
@@ -105,46 +126,62 @@ export default function ShotHeatmap({ shots, stats, team1, team2 }: Props) {
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
             className="w-full"
-            style={{ maxHeight: 220 }}
+            style={{ maxHeight: 320 }}
             aria-label="Shot map"
           >
-            {/* ── Pitch surface ── */}
-            <rect x={PITCH_LEFT} y={PITCH_TOP} width={PITCH_RIGHT} height={HALF_H}
+            {/* ── Pitch surface (full pitch) ── */}
+            <rect x={PITCH_LEFT} y={PITCH_TOP} width={PITCH_RIGHT} height={FIELD_H}
               fill="#1a3a2a" stroke="#3d7a55" strokeWidth="0.6" />
 
-            {/* ── Halfway line (bottom edge, just for reference) ── */}
-            <line x1={0} y1={PITCH_BOT} x2={100} y2={PITCH_BOT}
+            {/* ── Halfway line ── */}
+            <line x1={0} y1={HALFWAY_Y} x2={100} y2={HALFWAY_Y}
               stroke="#3d7a55" strokeWidth="0.5" strokeDasharray="2 2" />
 
-            {/* ── Penalty area ── */}
-            <rect x={PA_LEFT} y={PITCH_TOP} width={PA_RIGHT - PA_LEFT} height={PA_DEPTH}
+            {/* ── Top penalty area (goal at top) ── */}
+            <rect x={PA_LEFT} y={TOP_GOAL_LINE_Y} width={PA_RIGHT - PA_LEFT} height={PA_DEPTH}
               fill="none" stroke="#4a9e6a" strokeWidth="0.6" />
 
-            {/* ── 6-yard box ── */}
-            <rect x={SB_LEFT} y={PITCH_TOP} width={SB_RIGHT - SB_LEFT} height={SB_DEPTH}
+            {/* ── Top 6-yard box ── */}
+            <rect x={SB_LEFT} y={TOP_GOAL_LINE_Y} width={SB_RIGHT - SB_LEFT} height={SB_DEPTH}
               fill="none" stroke="#4a9e6a" strokeWidth="0.5" />
 
-            {/* ── Goal (above goal line) ── */}
-            <rect x={GOAL_LEFT} y={0} width={GOAL_RIGHT - GOAL_LEFT} height={GOAL_Y}
+            {/* ── Top goal (above top goal line) ── */}
+            <rect x={GOAL_LEFT} y={0} width={GOAL_RIGHT - GOAL_LEFT} height={GOAL_OVERHANG}
               fill="#2a4a35" stroke="#6abe87" strokeWidth="0.7" />
 
-            {/* ── Goal line ── */}
-            <line x1={0} y1={PITCH_TOP} x2={100} y2={PITCH_TOP}
+            {/* ── Top goal line ── */}
+            <line x1={0} y1={TOP_GOAL_LINE_Y} x2={100} y2={TOP_GOAL_LINE_Y}
               stroke="#4a9e6a" strokeWidth="0.8" />
 
-            {/* ── Penalty spot ── */}
-            <circle cx={PEN_X} cy={PEN_Y} r="0.8" fill="#4a9e6a" />
+            {/* ── Top penalty spot ── */}
+            <circle cx={PEN_X} cy={TOP_PEN_Y} r="0.8" fill="#4a9e6a" />
 
-            {/* ── Centre arc (bottom of pitch) ── */}
-            <path
-              d={`M 21.7 ${PITCH_BOT} A 28.3 28.3 0 0 1 78.3 ${PITCH_BOT}`}
-              fill="none" stroke="#3d7a55" strokeWidth="0.5"
-            />
+            {/* ── Bottom penalty area (goal at bottom) ── */}
+            <rect x={PA_LEFT} y={BOTTOM_GOAL_LINE_Y - PA_DEPTH} width={PA_RIGHT - PA_LEFT} height={PA_DEPTH}
+              fill="none" stroke="#4a9e6a" strokeWidth="0.6" />
+
+            {/* ── Bottom 6-yard box ── */}
+            <rect x={SB_LEFT} y={BOTTOM_GOAL_LINE_Y - SB_DEPTH} width={SB_RIGHT - SB_LEFT} height={SB_DEPTH}
+              fill="none" stroke="#4a9e6a" strokeWidth="0.5" />
+
+            {/* ── Bottom goal (beyond bottom goal line) ── */}
+            <rect x={GOAL_LEFT} y={BOTTOM_GOAL_LINE_Y} width={GOAL_RIGHT - GOAL_LEFT} height={GOAL_OVERHANG}
+              fill="#2a4a35" stroke="#6abe87" strokeWidth="0.7" />
+
+            {/* ── Bottom goal line ── */}
+            <line x1={0} y1={BOTTOM_GOAL_LINE_Y} x2={100} y2={BOTTOM_GOAL_LINE_Y}
+              stroke="#4a9e6a" strokeWidth="0.8" />
+
+            {/* ── Bottom penalty spot ── */}
+            <circle cx={PEN_X} cy={BOTTOM_PEN_Y} r="0.8" fill="#4a9e6a" />
+
+            {/* ── Centre circle (full) ── */}
+            <circle cx="50" cy={HALFWAY_Y} r={CENTER_R} fill="none" stroke="#3d7a55" strokeWidth="0.5" />
 
             {/* ── Shot dots ── */}
             {shots.map((shot, i) => {
-              const cx  = toSvgX(shot.espnY)
-              const cy  = toSvgY(shot.espnX)
+              const cx = toSvgX(shot.espnY)
+              const cy = toSvgY(shot.espnX, shot.side)
               const cfg = DOT_CONFIG[shot.type]
               const color = shot.side === 'home' ? HOME_COLOR : AWAY_COLOR
               return (
