@@ -9,6 +9,7 @@ import { teamFlag, deriveStatus, formatFullKickoff, formatKickoffLocal, isLocked
 import { useGeoLocation } from '../hooks/useGeoLocation'
 import BottomNav from '../components/BottomNav'
 import OddsDisplay from '../components/OddsDisplay'
+import { useScoreRefresh } from '../hooks/useScoreRefresh'
 
 // ---------------------------------------------------------------------------
 // Score stepper — +/- buttons for mobile-friendly score input
@@ -92,6 +93,7 @@ export default function MatchPage() {
   }
 
   const status  = deriveStatus(match)
+  useScoreRefresh(id, status)
   const locked  = isLocked(match)
   const username = profile?.username ?? 'Anonymous'
 
