@@ -40,27 +40,32 @@ const PITCH_TOP = TOP_GOAL_LINE_Y
 
 const FIELD_SCALE = FIELD_H / 105
 
-// Penalty area
-const PA_LEFT = (68 - 40.32) / 68 * 100
-const PA_RIGHT = PA_LEFT + 40.32 / 68 * 100
+// Penalty area: 40.32m wide × 16.5m deep, centered on 68m pitch
+const PA_LEFT  = (68 - 40.32) / 2 / 68 * 100   // ≈ 20.4
+const PA_RIGHT = PA_LEFT + 40.32 / 68 * 100      // ≈ 79.6
 const PA_DEPTH = 16.5 * FIELD_SCALE
 
-// 6-yard box
-const SB_LEFT = (68 - 18.32) / 68 * 100
-const SB_RIGHT = SB_LEFT + 18.32 / 68 * 100
+// 6-yard box: 18.32m wide × 5.5m deep, centered
+const SB_LEFT  = (68 - 18.32) / 2 / 68 * 100    // ≈ 36.5
+const SB_RIGHT = SB_LEFT + 18.32 / 68 * 100      // ≈ 63.5
 const SB_DEPTH = 5.5 * FIELD_SCALE
 
-// Goal width
-const GOAL_LEFT = (68 - 7.32) / 68 * 100
-const GOAL_RIGHT = GOAL_LEFT + 7.32 / 68 * 100
+// Goal: 7.32m wide, centered
+const GOAL_LEFT  = (68 - 7.32) / 2 / 68 * 100   // ≈ 44.6
+const GOAL_RIGHT = GOAL_LEFT + 7.32 / 68 * 100   // ≈ 55.4
 
 // Penalty spots
 const PEN_X = 50
-const TOP_PEN_Y = TOP_GOAL_LINE_Y + 11 * FIELD_SCALE
+const TOP_PEN_Y    = TOP_GOAL_LINE_Y    + 11 * FIELD_SCALE
 const BOTTOM_PEN_Y = BOTTOM_GOAL_LINE_Y - 11 * FIELD_SCALE
 
 // Centre circle
 const CENTER_R = 9.15 * FIELD_SCALE
+
+// Penalty arc (D-shape): circle r=9.15m centred on pen spot, portion outside PA
+const ARC_R  = 9.15 * FIELD_SCALE
+const ARC_D  = (16.5 - 11) * FIELD_SCALE               // pen spot → PA edge distance
+const ARC_HW = Math.sqrt(ARC_R * ARC_R - ARC_D * ARC_D) // half-width at intersection
 
 // ── Shot visual config ────────────────────────────────────────────────────────
 const DOT_CONFIG = {
@@ -156,6 +161,12 @@ export default function ShotHeatmap({ shots, stats, team1, team2 }: Props) {
             {/* ── Top penalty spot ── */}
             <circle cx={PEN_X} cy={TOP_PEN_Y} r="0.8" fill="#4a9e6a" />
 
+            {/* ── Top penalty arc (D) — portion outside penalty area ── */}
+            <path
+              d={`M ${50 - ARC_HW} ${TOP_GOAL_LINE_Y + PA_DEPTH} A ${ARC_R} ${ARC_R} 0 0 1 ${50 + ARC_HW} ${TOP_GOAL_LINE_Y + PA_DEPTH}`}
+              fill="none" stroke="#4a9e6a" strokeWidth="0.5"
+            />
+
             {/* ── Bottom penalty area (goal at bottom) ── */}
             <rect x={PA_LEFT} y={BOTTOM_GOAL_LINE_Y - PA_DEPTH} width={PA_RIGHT - PA_LEFT} height={PA_DEPTH}
               fill="none" stroke="#4a9e6a" strokeWidth="0.6" />
@@ -175,8 +186,15 @@ export default function ShotHeatmap({ shots, stats, team1, team2 }: Props) {
             {/* ── Bottom penalty spot ── */}
             <circle cx={PEN_X} cy={BOTTOM_PEN_Y} r="0.8" fill="#4a9e6a" />
 
-            {/* ── Centre circle (full) ── */}
+            {/* ── Bottom penalty arc (D) — portion outside penalty area ── */}
+            <path
+              d={`M ${50 - ARC_HW} ${BOTTOM_GOAL_LINE_Y - PA_DEPTH} A ${ARC_R} ${ARC_R} 0 0 0 ${50 + ARC_HW} ${BOTTOM_GOAL_LINE_Y - PA_DEPTH}`}
+              fill="none" stroke="#4a9e6a" strokeWidth="0.5"
+            />
+
+            {/* ── Centre circle + spot ── */}
             <circle cx="50" cy={HALFWAY_Y} r={CENTER_R} fill="none" stroke="#3d7a55" strokeWidth="0.5" />
+            <circle cx="50" cy={HALFWAY_Y} r="0.8" fill="#3d7a55" />
 
             {/* ── Shot dots ── */}
             {shots.map((shot, i) => {
