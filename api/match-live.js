@@ -137,22 +137,37 @@ export default async function handler(req, res) {
     if (!match || match.status === 'upcoming') return res.status(200).json(EMPTY)
 
     // ── 2. ESPN scoreboard ────────────────────────────────────────────────────
-    const dateStr = new Date(match.starts_at).toISOString().slice(0, 10).replace(/-/g, '')
-    const boardRes = await fetchWithTimeout(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`,
-      { headers: { 'User-Agent': 'WorldCupCompanion/1.0' } },
-    )
-    if (!boardRes.ok) return res.status(200).json(EMPTY)
+    // ESPN buckets matches by local US-ET date, not UTC. A match starting at
+    // 01:00 UTC June 20 = 9 PM ET June 19, so we must also try the prior day.
+    const startMs  = new Date(match.starts_at).getTime()
+    const dateUTC  = new Date(match.starts_at).toISOString().slice(0, 10).replace(/-/g, '')
+    const datePrev = new Date(startMs - 86_400_000).toISOString().slice(0, 10).replace(/-/g, '')
 
-    const { events: espnEvents = [] } = await boardRes.json()
-    const espnEvent = espnEvents.find(ev => {
-      const comp = ev.competitions?.[0]
-      if (!comp) return false
-      const h = comp.competitors?.find(c => c.homeAway === 'home')?.team?.displayName ?? ''
-      const a = comp.competitors?.find(c => c.homeAway === 'away')?.team?.displayName ?? ''
-      return (teamsMatch(h, match.team1) && teamsMatch(a, match.team2)) ||
-             (teamsMatch(h, match.team2) && teamsMatch(a, match.team1))
-    })
+    function findInEvents(events) {
+      return events.find(ev => {
+        const comp = ev.competitions?.[0]
+        if (!comp) return false
+        const h = comp.competitors?.find(c => c.homeAway === 'home')?.team?.displayName ?? ''
+        const a = comp.competitors?.find(c => c.homeAway === 'away')?.team?.displayName ?? ''
+        return (teamsMatch(h, match.team1) && teamsMatch(a, match.team2)) ||
+               (teamsMatch(h, match.team2) && teamsMatch(a, match.team1))
+      })
+    }
+
+    async function fetchScoreboard(dateStr) {
+      const r = await fetchWithTimeout(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`,
+        { headers: { 'User-Agent': 'WorldCupCompanion/1.0' } },
+      )
+      if (!r.ok) return []
+      const { events = [] } = await r.json()
+      return events
+    }
+
+    let espnEvent = findInEvents(await fetchScoreboard(dateUTC))
+    if (!espnEvent && datePrev !== dateUTC) {
+      espnEvent = findInEvents(await fetchScoreboard(datePrev))
+    }
     if (!espnEvent) return res.status(200).json(EMPTY)
 
     const comp       = espnEvent.competitions[0]
