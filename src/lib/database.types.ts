@@ -51,6 +51,7 @@ export interface Database {
           status:             'upcoming' | 'live' | 'finished'
           odds:               OddsData | null
           odds_last_updated:  string | null
+          possession_home:    number | null
         }
         Insert: {
           id?:                string
@@ -66,6 +67,7 @@ export interface Database {
           status?:            'upcoming' | 'live' | 'finished'
           odds?:              OddsData | null
           odds_last_updated?: string | null
+          possession_home?:   number | null
         }
         Update: {
           score1?:            number | null
@@ -73,7 +75,52 @@ export interface Database {
           status?:            'upcoming' | 'live' | 'finished'
           odds?:              OddsData | null
           odds_last_updated?: string | null
+          possession_home?:   number | null
         }
+      }
+      match_events: {
+        Row: {
+          id:          string
+          match_id:    string
+          minute:      number
+          event_type:  'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'second_yellow' | 'substitution' | 'var' | 'penalty_missed'
+          team:        string
+          player_name: string | null
+          description: string | null
+          created_at:  string
+        }
+        Insert: {
+          id?:         string
+          match_id:    string
+          minute:      number
+          event_type:  'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'second_yellow' | 'substitution' | 'var' | 'penalty_missed'
+          team:        string
+          player_name?: string | null
+          description?: string | null
+          created_at?: string
+        }
+        Update: never
+      }
+      match_shots: {
+        Row: {
+          id:         string
+          match_id:   string
+          x:          number
+          y:          number
+          team:       string
+          on_target:  boolean
+          created_at: string
+        }
+        Insert: {
+          id?:        string
+          match_id:   string
+          x:          number
+          y:          number
+          team:       string
+          on_target?: boolean
+          created_at?: string
+        }
+        Update: never
       }
       predictions: {
         Row: {
@@ -132,9 +179,11 @@ export interface OddsData {
 }
 
 // Convenience aliases used throughout the app
-export type Profile    = Database['public']['Tables']['profiles']['Row']
-export type Match      = Database['public']['Tables']['matches']['Row']
-export type Prediction = Database['public']['Tables']['predictions']['Row']
-export type Message    = Database['public']['Tables']['messages']['Row']
+export type Profile     = Database['public']['Tables']['profiles']['Row']
+export type Match       = Database['public']['Tables']['matches']['Row']
+export type Prediction  = Database['public']['Tables']['predictions']['Row']
+export type Message     = Database['public']['Tables']['messages']['Row']
+export type MatchEvent  = Database['public']['Tables']['match_events']['Row']
+export type MatchShot   = Database['public']['Tables']['match_shots']['Row']
 
 export type MatchWithPrediction = Match & { my_prediction: Prediction | null }
