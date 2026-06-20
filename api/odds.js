@@ -82,9 +82,19 @@ export default async function handler(req, res) {
 
     const events = await oddsRes.json()
 
-    // Find the event matching this match by team names (case-insensitive)
-    const t1 = match.team1.toLowerCase()
-    const t2 = match.team2.toLowerCase()
+    // Our DB name → The Odds API name (where substring matching would fail)
+    const ODDS_NAME_MAP = {
+      'turkiye':  'turkey',
+      'czechia':  'czech republic',
+      'bosnia':   'bosnia & herzegovina',
+      'curacao':  'curaçao',
+      'ivory coast': 'ivory coast',   // same, included for clarity
+    }
+    const normalise = name => ODDS_NAME_MAP[name.toLowerCase()] ?? name.toLowerCase()
+
+    // Find the event matching this match by team names (case-insensitive, with aliases)
+    const t1 = normalise(match.team1)
+    const t2 = normalise(match.team2)
     const event = events.find(e =>
       (e.home_team.toLowerCase().includes(t1) || t1.includes(e.home_team.toLowerCase())) &&
       (e.away_team.toLowerCase().includes(t2) || t2.includes(e.away_team.toLowerCase()))
