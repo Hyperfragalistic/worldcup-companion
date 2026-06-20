@@ -75,9 +75,9 @@ export function deriveStatus(match: Match): 'upcoming' | 'live' | 'finished' {
   const now   = Date.now()
   const end   = start + 2 * 60 * 60 * 1000 // assume 2-hour matches
   if (now >= start && now <= end) return 'live'
-  // Only auto-finish by time if the match has actual scores — prevents hiding
-  // Predict on matches that are past their slot but not yet marked finished in DB
-  if (now > end && match.score1 !== null) return 'finished'
+  // Any match past its 2h window is finished regardless of whether the DB score
+  // has been written yet — avoids stale 'upcoming' when ESPN scraping misses a game.
+  if (now > end) return 'finished'
   return 'upcoming'
 }
 
