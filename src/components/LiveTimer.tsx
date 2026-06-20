@@ -3,25 +3,29 @@ import { useState, useEffect } from 'react'
 interface Props {
   startsAt: string
   status:   'upcoming' | 'live' | 'finished'
+  elapsed?: string | null  // ESPN's authoritative clock (e.g. "45:30"); takes priority when present
 }
 
 function computeDisplay(startsAt: string): string {
-  const elapsed = Math.floor((Date.now() - new Date(startsAt).getTime()) / 60_000)
-  if (elapsed < 0)   return '0\''
-  if (elapsed <= 45) return `${elapsed}'`
-  if (elapsed <= 50) return `45+${elapsed - 45}'`
-  if (elapsed <= 90) return `${elapsed}'`
-  return `90+${elapsed - 90}'`
+  const mins = Math.floor((Date.now() - new Date(startsAt).getTime()) / 60_000)
+  if (mins < 0)   return '0\''
+  if (mins <= 45) return `${mins}'`
+  if (mins <= 50) return `45+${mins - 45}'`
+  if (mins <= 90) return `${mins}'`
+  return `90+${mins - 90}'`
 }
 
-export default function LiveTimer({ startsAt, status }: Props) {
-  const [display, setDisplay] = useState(() => computeDisplay(startsAt))
+export default function LiveTimer({ startsAt, status, elapsed }: Props) {
+  const [display, setDisplay] = useState(() => elapsed ?? computeDisplay(startsAt))
 
   useEffect(() => {
     if (status !== 'live') return
+    // ESPN's clock (refreshed every 60s by useMatchLive) is preferred — it knows
+    // actual stoppage time. Only run the local counter when elapsed is absent.
+    if (elapsed) { setDisplay(elapsed); return }
     const id = setInterval(() => setDisplay(computeDisplay(startsAt)), 30_000)
     return () => clearInterval(id)
-  }, [startsAt, status])
+  }, [startsAt, status, elapsed])
 
   if (status !== 'live') return null
 

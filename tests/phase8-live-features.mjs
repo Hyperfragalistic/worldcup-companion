@@ -39,7 +39,7 @@
 
 import { chromium } from 'playwright';
 
-const BASE         = 'https://worldcup-companion-beta.vercel.app';
+const BASE = process.env.BASE_URL || 'https://worldcup-companion-beta.vercel.app';
 const SUPABASE_URL = 'https://cxklsqbtmhxapebaqrlh.supabase.co';
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 const TEST_EMAIL   = process.env.TEST_USER_EMAIL;
@@ -288,8 +288,8 @@ console.log('\n=== TEST 6: Shot Heatmap on a finished match page ===');
     await page.waitForTimeout(3000); // allow shot data to load
     await shot(page, '6-shot-heatmap');
 
-    // SVG pitch — ShotHeatmap renders an SVG with viewBox="0 0 100 78"
-    const svg = page.locator('svg[viewBox="0 0 100 78"]');
+    // SVG pitch — ShotHeatmap now renders a full pitch (viewBox="0 0 100 160")
+    const svg = page.locator('svg[viewBox^="0 0 100 "]');
     const svgCount = await svg.count();
     check('Shot heatmap SVG present', svgCount > 0, `svg count: ${svgCount}`);
 
@@ -392,7 +392,7 @@ console.log('\n=== TEST 8: Upcoming match page — live features absent ===');
     await shot(page, '8-upcoming-match');
 
     // No SVG heatmap for upcoming match (ShotHeatmap returns null when no shots/stats)
-    const svgHeatmap = await page.locator('svg[viewBox="0 0 100 78"]').count();
+    const svgHeatmap = await page.locator('svg[viewBox^="0 0 100 "]').count();
     check('No shot heatmap SVG on upcoming match', svgHeatmap === 0, `found ${svgHeatmap}`);
 
     // No pulsing timer for upcoming
@@ -405,18 +405,19 @@ console.log('\n=== TEST 8: Upcoming match page — live features absent ===');
 }
 
 // =============================================================================
-// TEST 9: /api/match-events endpoint structure
+// TEST 9: /api/match-live — events + possession structure
+// (Replaces old /api/match-events test; unified endpoint returns all live data)
 // =============================================================================
-console.log('\n=== TEST 9: /api/match-events API ===');
+console.log('\n=== TEST 9: /api/match-live — events + possession ===');
 {
   const finishedMatches = await fetchMatches("status=eq.finished");
 
   if (finishedMatches.length === 0) {
-    check('/api/match-events returns events array', false, 'no finished matches — skipped');
+    check('/api/match-live returns events array', false, 'no finished matches — skipped');
   } else {
     const matchId = finishedMatches[0].id;
-    const r = await fetch(`${BASE}/api/match-events?matchId=${matchId}`);
-    check('GET /api/match-events returns 200', r.status === 200, `status: ${r.status}`);
+    const r = await fetch(`${BASE}/api/match-live?matchId=${matchId}`);
+    check('GET /api/match-live returns 200', r.status === 200, `status: ${r.status}`);
     const data = await r.json();
     check('Response has events array', Array.isArray(data.events), typeof data.events);
     check('Response has possession or null', data.possession === null || (typeof data.possession?.home === 'number'), JSON.stringify(data.possession));
@@ -424,18 +425,19 @@ console.log('\n=== TEST 9: /api/match-events API ===');
 }
 
 // =============================================================================
-// TEST 10: /api/match-shots endpoint structure
+// TEST 10: /api/match-live — shots + stats structure
+// (Replaces old /api/match-shots test; unified endpoint returns all live data)
 // =============================================================================
-console.log('\n=== TEST 10: /api/match-shots API ===');
+console.log('\n=== TEST 10: /api/match-live — shots + stats ===');
 {
   const finishedMatches = await fetchMatches("status=eq.finished");
 
   if (finishedMatches.length === 0) {
-    check('/api/match-shots returns shots array', false, 'no finished matches — skipped');
+    check('/api/match-live returns shots array', false, 'no finished matches — skipped');
   } else {
     const matchId = finishedMatches[0].id;
-    const r = await fetch(`${BASE}/api/match-shots?matchId=${matchId}`);
-    check('GET /api/match-shots returns 200', r.status === 200, `status: ${r.status}`);
+    const r = await fetch(`${BASE}/api/match-live?matchId=${matchId}`);
+    check('GET /api/match-live returns 200 (shots)', r.status === 200, `status: ${r.status}`);
     const data = await r.json();
     check('Response has shots array', Array.isArray(data.shots), typeof data.shots);
     if (data.shots?.length > 0) {

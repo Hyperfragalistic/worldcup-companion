@@ -85,7 +85,7 @@ export default function MatchPage() {
   // falling back to 'upcoming' while match data is still loading.
   const status = match ? deriveStatus(match) : 'upcoming'
   useScoreRefresh(id, status)
-  const { events, possession, shots, stats } = useMatchLive(id, status)
+  const { events, possession, elapsed, shots, stats } = useMatchLive(id, status)
 
   if (loading) {
     return (
@@ -169,7 +169,7 @@ export default function MatchPage() {
               ) : (
                 <span className="text-lg font-semibold text-gray-400">vs</span>
               )}
-              <LiveTimer startsAt={match.starts_at} status={status} />
+              <LiveTimer startsAt={match.starts_at} status={status} elapsed={elapsed} />
               <p className="mt-1 text-center text-[11px] text-gray-500">
                 {status === 'finished' ? 'Full time' : (
                   <>

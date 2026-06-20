@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react'
 
-const LIVE_POLL_MS = 2 * 60 * 1000 // 2 minutes
+// 5 minutes — matches the cron cadence. useMatchLive already polls ESPN every
+// 60s for events/possession/shots, so score writes back to Supabase don't need
+// to be more frequent than the background cron.
+const LIVE_POLL_MS = 5 * 60 * 1000
 
 /**
- * Triggers /api/refresh-scores when a MatchPage is open.
- * - upcoming: fires once on mount (catches a match that has just kicked off)
- * - live: fires on mount then every 2 minutes, paused while tab is hidden
- * - finished: no-op
+ * Writes live ESPN scores back to Supabase so Realtime pushes updates to
+ * other clients. Fires once on mount for upcoming (catches recent kick-offs)
+ * then every 5 minutes while live. No-op for finished matches.
  */
 export function useScoreRefresh(matchId: string, status: 'upcoming' | 'live' | 'finished') {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
