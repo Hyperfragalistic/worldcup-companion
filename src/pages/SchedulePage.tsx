@@ -8,6 +8,8 @@ import { useProfile } from '../hooks/useProfile'
 import { useGeoLocation } from '../hooks/useGeoLocation'
 import { deriveStatus, formatMatchDate, teamFlag, WC_TEAM_BY_COUNTRY } from '../lib/utils'
 import type { MatchWithPrediction } from '../lib/database.types'
+import NewsTicker from '../components/NewsTicker'
+import { useNews }  from '../hooks/useNews'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 type TabId  = 'today' | 'myteam' | 'upcoming' | 'all'
@@ -48,6 +50,7 @@ function dateStripLabel(dateStr: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
   const { matches, loading, error } = useMatches()
+  const { items: newsItems }        = useNews()
   const { profile, updateProfile }  = useProfile()
   const geo                         = useGeoLocation()
   const [params, setParams]         = useSearchParams()
@@ -384,6 +387,9 @@ export default function SchedulePage() {
           </div>
         )}
       </header>
+
+      {/* ── News ticker ── */}
+      <NewsTicker items={newsItems} />
 
       {/* ── Content ── */}
       <div className="px-4 py-4">
