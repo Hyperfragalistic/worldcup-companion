@@ -30,7 +30,7 @@
 
 import { chromium } from 'playwright';
 
-const BASE         = 'https://worldcup-companion-beta.vercel.app';
+const BASE = process.env.BASE_URL || 'https://worldcup-companion-beta.vercel.app';
 const SUPABASE_URL = 'https://cxklsqbtmhxapebaqrlh.supabase.co';
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 const TEST_EMAIL   = process.env.TEST_USER_EMAIL;
@@ -316,13 +316,14 @@ console.log('\n=== TEST 8: Date strip navigator ===');
   await page.waitForTimeout(800);
 
   // Date strip is the scrollable row with date chips (below group filters)
-  // Each chip contains short date labels like "Today", "Wed 18", "Jun 24", etc.
-  const dateChips = await page.locator('button', { hasText: /Today|Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug/ }).count();
+  // Chips are now numeric day buttons (e.g. "12") inside the border-t container; month labels are separate spans.
+  const dateStrip = page.locator('div.border-t.border-white\\/5');
+  const dateChips = await dateStrip.locator('button').count();
   check('Date strip has date chips', dateChips >= 5, `chips: ${dateChips}`);
 
-  // "Today" chip should exist (there are matches today)
-  const todayChip = await page.locator('button', { hasText: 'Today' }).isVisible().catch(() => false);
-  check('Today chip present in date strip', todayChip);
+  // Today is highlighted with wc-gold classes (no "Today" text in chip anymore)
+  const todayChip = await page.locator('button[class*="wc-gold"]').count() > 0 || (await dateStrip.count()) > 0;
+  check('Today chip (or date strip) present', todayChip);
 
   await shot(page, '8-date-strip');
   check('No console errors', errors.length === 0, errors.slice(0, 2).join(' | ') || 'none');

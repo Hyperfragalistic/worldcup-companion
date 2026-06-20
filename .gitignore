@@ -37,3 +37,6 @@ supabase/.temp/
 # MCP config contains access tokens — never commit
 .mcp.json
 .vercel
+
+# Vercel CLI env pull output — contains OIDC tokens, never commit
+.env.test

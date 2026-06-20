@@ -13,7 +13,7 @@
 
 import { chromium } from 'playwright';
 
-const BASE         = 'https://worldcup-companion-beta.vercel.app';
+const BASE = process.env.BASE_URL || 'https://worldcup-companion-beta.vercel.app';
 const SUPABASE_URL = 'https://cxklsqbtmhxapebaqrlh.supabase.co';
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 const TEST_EMAIL   = process.env.TEST_USER_EMAIL;
@@ -124,13 +124,13 @@ async function openPage(path, waitMs = 2500) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TEST 1: Schedule — 24 match cards render
+// TEST 1: Schedule — cards render on All tab (data volume varies)
 // ─────────────────────────────────────────────────────────────────────────────
-console.log('\n=== TEST 1: Schedule loads 24 match cards ===');
+console.log('\n=== TEST 1: Schedule loads match cards ===');
 {
-  const { ctx, page, consoleErrors } = await openPage('/');
-  const cards = await page.locator('button.w-full.rounded-xl').count();
-  check('24 match cards rendered', cards === 24, `count: ${cards}`);
+  const { ctx, page, consoleErrors } = await openPage('/?tab=all');
+  const cards = await page.locator('div[class*="rounded-xl"][class*="ring"]').count();
+  check('Many match cards rendered on All tab', cards > 50, `count: ${cards}`);
   check('Schedule header visible', await page.isVisible('text=World Cup 2026'));
   check('No console errors', consoleErrors.length === 0, consoleErrors.slice(0,2).join(' | ') || 'none');
   await shot(page, '1-schedule');

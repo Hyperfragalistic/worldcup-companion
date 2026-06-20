@@ -13,7 +13,7 @@
 
 import { chromium } from 'playwright';
 
-const BASE         = 'https://worldcup-companion-beta.vercel.app';
+const BASE = process.env.BASE_URL || 'https://worldcup-companion-beta.vercel.app';
 const SUPABASE_URL = 'https://cxklsqbtmhxapebaqrlh.supabase.co';
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 const TEST_EMAIL   = process.env.TEST_USER_EMAIL;

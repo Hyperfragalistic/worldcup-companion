@@ -2,8 +2,8 @@ import { chromium } from 'playwright'
 
 const SUPABASE_URL         = 'https://cxklsqbtmhxapebaqrlh.supabase.co'
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
-const TEST_EMAIL           = 'clchichung@gmail.com'
-const VERCEL_URL           = 'https://worldcup-companion-beta.vercel.app'
+const TEST_EMAIL           = process.env.TEST_USER_EMAIL || 'you@example.com'
+const VERCEL_URL           = process.env.BASE_URL || 'https://worldcup-companion-beta.vercel.app'
 const BASE_URL             = VERCEL_URL
 
 if (!SUPABASE_SERVICE_KEY) { console.error('SUPABASE_SERVICE_KEY required'); process.exit(1) }
