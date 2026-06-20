@@ -10,8 +10,7 @@ import { useGeoLocation } from '../hooks/useGeoLocation'
 import BottomNav from '../components/BottomNav'
 import OddsDisplay from '../components/OddsDisplay'
 import { useScoreRefresh } from '../hooks/useScoreRefresh'
-import { useMatchEvents } from '../hooks/useMatchEvents'
-import { useMatchShots }  from '../hooks/useMatchShots'
+import { useMatchLive }   from '../hooks/useMatchLive'
 import LiveTimer     from '../components/LiveTimer'
 import PossessionBar from '../components/PossessionBar'
 import MatchTimeline from '../components/MatchTimeline'
@@ -86,8 +85,7 @@ export default function MatchPage() {
   // falling back to 'upcoming' while match data is still loading.
   const status = match ? deriveStatus(match) : 'upcoming'
   useScoreRefresh(id, status)
-  const { events, possession } = useMatchEvents(id, status)
-  const { shots, stats }       = useMatchShots(id, status)
+  const { events, possession, shots, stats } = useMatchLive(id, status)
 
   if (loading) {
     return (
