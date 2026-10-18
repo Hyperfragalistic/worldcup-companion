@@ -1,0 +1,6 @@
+title = "worldcup-companion"
+
+# Extend the built-in ruleset. Clear false positives are exact fingerprints
+# in .gitleaksignore, not a path allowlist.
+[extend]
+useDefault = true
