@@ -1,10 +1,21 @@
 // Phase 6 migration runner — uses service role key + supabase-js REST API
-// Run: node scripts/migrate-phase6.mjs
-import { createClient } from '@supabase/supabase-js'
-import ws from 'ws'
+// Run: SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/migrate-phase6.mjs
 
-const SUPABASE_URL = 'https://cxklsqbtmhxapebaqrlh.supabase.co'
-const SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4a2xzcWJ0bWh4YXBlYmFxcmxoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTY1Mjk0OSwiZXhwIjoyMDk3MjI4OTQ5fQ.XuRuNKq8OIe0wLPxq2n29XzyoFYaFpMisZ7M0hEUerc'
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+const missing = []
+if (!SUPABASE_URL) missing.push('SUPABASE_URL (or VITE_SUPABASE_URL)')
+if (!SERVICE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+if (missing.length) {
+  const verb = missing.length > 1 ? 'are' : 'is'
+  console.error(`Error: ${missing.join(' and ')} ${verb} not set.`)
+  console.error('Add it to your shell environment or to a gitignored .env file.')
+  process.exit(1)
+}
+
+const { createClient } = await import('@supabase/supabase-js')
+const { default: ws } = await import('ws')
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
