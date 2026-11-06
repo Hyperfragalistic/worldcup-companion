@@ -40,3 +40,17 @@ supabase/.temp/
 
 # Vercel CLI env pull output — contains OIDC tokens, never commit
 .env.test
+
+# Env files (keep the committed example)
+.env.*
+!.env.example
+
+# Private keys, certificates, and credential files
+*.pem
+*.key
+*.p12
+credentials*.json
+*service-account*.json
+*serviceaccount*.json
+.npmrc
+.pypirc
